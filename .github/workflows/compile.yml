@@ -17,5 +17,5 @@ jobs:
       run: echo $(pwd)
     - name: compile
       shell: bash
-      run: chmod +x compile.sh
+      run: chmod +x compile.sh;
            compile.sh
