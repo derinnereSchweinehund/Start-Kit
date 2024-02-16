@@ -13,4 +13,5 @@ jobs:
 
     steps:
     - name: compile
-      run: bash compile.sh
+      shell: bash
+      run: bash ${{github.workspace}}/compile.sh
