@@ -12,6 +12,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: name
+      shell: bash
+      run: ls ${{github.workspace}}
     - name: compile
       shell: bash
-      run: bash ${github.workspace}/compile.sh
+      run: bash ${{github.workspace}}/compile.sh
