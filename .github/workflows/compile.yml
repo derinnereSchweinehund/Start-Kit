@@ -14,10 +14,11 @@ jobs:
     steps:
     - name: Check out the repository to the runner
       uses: actions/checkout@v4  
-    - name: name
+    - name: dependencies
       shell: bash
-      run: echo $(pwd)
+      run: apt install libboost-all-dev
     - name: compile
       shell: bash
+      
       run: chmod +x compile.sh;
            bash compile.sh
