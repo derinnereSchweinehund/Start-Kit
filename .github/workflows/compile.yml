@@ -14,8 +14,8 @@ jobs:
     steps:
     - name: name
       shell: bash
-      run: echo $(ls ${{github.workspace}})
+      run: echo $(pwd)
     - name: compile
       shell: bash
-      run: chmod +x ./compile.sh
-           ./compile.sh
+      run: chmod +x compile.sh
+           compile.sh
