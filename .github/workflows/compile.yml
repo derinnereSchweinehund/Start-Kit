@@ -17,5 +17,6 @@ jobs:
       run: echo $(pwd)
     - name: compile
       shell: bash
-      run: chmod +x .github/compile.sh;
-           bash .github/compile.sh
+      run: echo $(git ls-files);
+           chmod +x compile.sh;
+           bash compile.sh
