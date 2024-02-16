@@ -12,11 +12,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Check out the repository to the runner
+      uses: actions/checkout@v4  
     - name: name
       shell: bash
       run: echo $(pwd)
     - name: compile
       shell: bash
-      run: echo $(git ls-files);
-           chmod +x compile.sh;
+      run: chmod +x compile.sh;
            bash compile.sh
