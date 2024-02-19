@@ -1,5 +1,3 @@
-#pragma once
-// #include "BasicSystem.h"
 #include "ActionModel.h"
 #include "ExecutionSimulator.h"
 #include "Grid.h"
@@ -7,26 +5,31 @@
 #include "MAPFPlanner.h"
 #include "SharedEnv.h"
 #include "Tasks.h"
+#include "planner_wrapper.h"
 #include <future>
 #include <pthread.h>
 
+template <class Simulator, class Task_Assigner, class Execution_Policy,
+          class Task_Generator, class Planner, class State>
 class BaseSystem {
 public:
+  BaseSystem(Task_Generator *task_generator, Task_Assigner *task_assigner,
+             State *state, Execution_Policy *execution_policy, Planner *planner,
+             Simulator *simulator)
+      : task_generator_(task_generator), task_assigner_(task_assigner),
+        state_(state), execution_policy_(execution_policy),
+        simulator_(simulator) {}
+
   int num_tasks_reveal = 1;
   Logger *logger = nullptr;
-
-  BaseSystem(Grid &grid, MAPFPlanner *planner, ActionModelWithRotate *model,
-             ActionExecutor *executor)
-      : map(grid), planner(planner), env(planner->env), model(model),
-        executor(executor) {}
 
   virtual ~BaseSystem() {
     // safely exit: wait for join the thread then delete planner and exit
     if (started) {
       task_td.join();
     }
-    if (planner != nullptr) {
-      delete planner;
+    if (planner_ != nullptr) {
+      delete planner_;
     }
   };
 
@@ -46,17 +49,16 @@ public:
   void saveResults(const string &fileName, int screen) const;
 
 protected:
-  Grid map;
+  Task_Generator *task_generator_;
+  Task_Assigner *task_assigner_;
+  State *state_;
+  Execution_Policy *execution_policy_;
+  Planner *planner_;
+  Simulator *simulator_;
 
   std::future<std::vector<Action>> future;
   std::thread task_td;
   bool started = false;
-
-  MAPFPlanner *planner;
-  SharedEnvironment *env;
-
-  ActionModelWithRotate *model;
-  ActionExecutor *executor;
 
   // #timesteps for simulation
   int timestep;

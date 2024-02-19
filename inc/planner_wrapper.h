@@ -1,17 +1,18 @@
 #include "ActionModel.h"
+#include "timer.h"
 #include <cstddef>
 #include <vector>
 
 struct metrics_t {
   size_t num_queries_;
-  double seconds_;
+  double planning_time_nanos_;
 
-  metrics_t() : num_queries_(0), seconds_(0) {}
+  metrics_t() : num_queries_(0), planning_time_nanos_(0) {}
 };
 
 template <class P> class PlannerWrapper {
 public:
-  PlannerWrapper(P *planner) : planner_(planner) {}
+  PlannerWrapper(P *planner) : planner_(planner), metrics_(), timer_() {}
 
   // Calls the planner's query method and updates the metrics
   // @param start The start states of the agents
@@ -21,14 +22,12 @@ public:
                              const std::vector<size_t> &goals,
                              double time_limit = 0.0) {
 
-    // TODO: should implement a timer
     metrics_.num_queries_++;
-    auto start_time = std::chrono::steady_clock::now();
+    timer_.start();
+
     std::vector<Action> &actions = planner_->query(starts, goals);
-    metrics_.seconds_ +=
-        std::chrono::duration_cast<std::chrono::duration<double>>(
-            std::chrono::steady_clock::now() - start_time)
-            .count();
+
+    metrics_.planning_time_nanos_ += timer_.elapsed_time_nano();
 
     return actions;
   }
@@ -37,6 +36,7 @@ public:
   const metrics_t &get_metrics() const { return metrics_; }
 
 private:
-  P *planner_;
+  P *const planner_;
   metrics_t metrics_;
+  timer timer_;
 };

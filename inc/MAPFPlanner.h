@@ -19,7 +19,7 @@ public:
     }
 
     std::vector<HeuristicTable> heuristics;
-    std::vector<int> decision; 
+    std::vector<int> decision;
     std::vector<int> prev_decision;
     std::vector<double> p;
     std::vector<State> prev_states;
