@@ -1,6 +1,7 @@
 #include "SharedEnv.h"
 #include "planner_wrapper.h"
 
+namespace execution_policy {
 template <class P> class ExecutionPolicy {
 
 public:
@@ -14,3 +15,4 @@ public:
 private:
   P *const planner_;
 };
+} // namespace execution_policy

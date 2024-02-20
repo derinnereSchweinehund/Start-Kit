@@ -213,7 +213,7 @@ void BaseSystem::simulate(int simulation_time) {
 
   // Start by getting agent locations from central controller
   // TODO: This looks weird, I only need this when I want dynamic start.
-  //curr_states = executor->get_agent_locations(timestep);
+  curr_states = executor->get_agent_locations(timestep);
 
   for (; timestep < simulation_time;) {
 
