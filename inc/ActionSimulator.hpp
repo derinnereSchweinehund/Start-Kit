@@ -3,7 +3,6 @@
 #include "Status.hpp"
 #include <boost/asio/io_service.hpp>
 #include <random>
-#include <string>
 
 template <class ActionModel> class ActionSimulator {
 public:
@@ -38,20 +37,7 @@ public:
       : success_chance_(success_chance), rd_(), gen_(rd_()), distrib_(0, 1),
         ActionSimulator(model, env){};
 
-  vector<Status> simulate_action(vector<Action> &next_actions) override {
-    vector<Status> progress(env->num_of_agents);
-    for (int i = 0; i < env->num_of_agents; i++) {
-      // Succeeds success_chance % of the time, never if <=0 and always if >=1
-      if (success_chance_ > distrib_(gen_)) {
-        progress[i] = Status::SUCCESS;
-        State &curr = env->curr_states.at(i);
-        curr = model.result_state(curr, next_actions.at(i));
-      } else {
-        progress[i] = Status::FAILED;
-      }
-    }
-    return progress;
-  }
+  vector<Status> simulate_action(vector<Action> &next_actions) override;
 
   virtual bool validate_safe(const vector<Action> &next_actions) override;
 
