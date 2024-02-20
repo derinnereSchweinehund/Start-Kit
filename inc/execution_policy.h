@@ -20,6 +20,7 @@ private:
 
 // MinimumCommunicationPolicy maintains a partial ordering of path dependencies
 // by queuing reservations on each location
+// Using the ActionModelWithRotate to predict result states of actions
 template <class P> class MinimumCommunicationPolicy {
 
 public:
@@ -44,7 +45,7 @@ public:
     return corrected_actions;
   }
 private:
-  const P planner_;
+  P* const planner_;
   ScheduleTable schedule_;
   ActionModelWithRotate planner_model_;
 
