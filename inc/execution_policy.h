@@ -2,14 +2,15 @@
 #include "planner_wrapper.h"
 
 namespace execution_policy {
+
 template <class P> class ExecutionPolicy {
 
 public:
   ExecutionPolicy(P *planner) : planner_(planner_) {}
 
-  std::vector<Action> &get_actions(const SharedEnvironment &env) {
+  std::vector<Action> &get_actions(const SharedEnvironment& state) {
 
-    return planner_->query(env.curr_states, env.goal_locations);
+    return planner_->query(state.current_states_, state.goal_locations);
   }
 
 private:

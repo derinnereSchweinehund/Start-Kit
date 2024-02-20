@@ -2,7 +2,7 @@
 
 namespace task_generator {
 
-template <class State> class TaskGenerator {
+class TaskGenerator {
 public:
   void update_task(State *state) {
     // TODO: mutate current state

@@ -1,30 +1,12 @@
 #include "ActionModel.h"
 #include "Logger.h"
+#include "SharedEnv.h"
 #include "Status.hpp"
 #include "Tasks.h"
 #include <future>
 #include <pthread.h>
 
 namespace base_system {
-
-struct state_t {
-  size_t num_of_agents_;
-  size_t timestep_;
-  // list of all available_tasks
-  std::vector<Task> available_tasks_;
-
-  std::vector<State> current_states_;
-  std::vector<deque<Task>> assigned_tasks_;
-  std::vector<Action> assigned_actions_;
-  std::vector<Status> current_status_;
-
-  state_t(size_t num_of_agents) : num_of_agents_(num_of_agents), timestep_(0) {
-    current_states_.resize(num_of_agents);
-    assigned_tasks_.resize(num_of_agents);
-    assigned_actions_.resize(num_of_agents);
-    current_status_.resize(num_of_agents);
-  }
-};
 
 struct metrics_t {
   std::vector<vector<Action>> actual_movements;
@@ -55,11 +37,6 @@ public:
     }
   };
 
-  // void set_num_tasks_reveal(int num) { num_tasks_reveal = num; };
-  // void set_plan_time_limit(int limit) { plan_time_limit = limit; };
-  // void set_preprocess_time_limit(int limit) { preprocess_time_limit = limit;
-  // }; void set_logger(Logger *logger) { this->logger = logger; }
-
   void simulate(int simulation_time);
 
   void savePaths(const string &fileName,
@@ -76,7 +53,7 @@ private:
   Simulator *simulator_;
   Logger *logger = nullptr;
 
-  state_t state_;
+  SharedEnvironment state_;
   metrics_t metrics_;
 
   std::future<std::vector<Action>> future;

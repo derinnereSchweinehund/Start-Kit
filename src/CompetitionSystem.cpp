@@ -77,11 +77,11 @@ void BaseSystem::move(vector<Action> &actions) {
   std::cout << std::endl;
 
   curr_states = next_states;
-  //if (simulate_each_step) {
-  //executor->send_plan(curr_states, next_states);
-  //curr_states = executor->get_agent_locations(timestep);
+  // if (simulate_each_step) {
+  // executor->send_plan(curr_states, next_states);
+  // curr_states = executor->get_agent_locations(timestep);
   //} else {
-  //curr_states = next_states;
+  // curr_states = next_states;
   //}
 }
 
@@ -194,58 +194,13 @@ void BaseSystem::log_event_finished(int agent_id, int task_id, int timestep) {
                    timestep);
 }
 
-// find a plan
-// TODO:
-// get state from sim
-//  -- status and configuration
-//  UPDATE
-// task assignment
-// execution policy
-//  -- could call planner or use buffered actions
-//  SEND ACTIONS
-//  validate actions
-//  simulate action
-//
 void BaseSystem::simulate(int simulation_time) {
-  // init logger
-  // Logger* log = new Logger();
-  initialize();
 
-  // Start by getting agent locations from central controller
-  // TODO: This looks weird, I only need this when I want dynamic start.
-  curr_states = executor->get_agent_locations(timestep);
-
-  for (; timestep < simulation_time;) {
-
-    sync_shared_env();
-
-    auto start = std::chrono::steady_clock::now();
-    vector<Action> actions = plan();
-    auto end = std::chrono::steady_clock::now();
-
-    if (!planner_movements[0].empty() &&
-        planner_movements[0].back() == Action::NA) {
-      planner_times.back() +=
-          plan_time_limit; // add planning time to last record
-    } else {
-      auto diff = end - start;
-      planner_times.push_back(std::chrono::duration<double>(diff).count());
-    }
-
-    // Increment agent plan costs
-    timestep += 1;
-    for (int a = 0; a < num_of_agents; a++) {
-      if (!env->goal_locations[a].empty())
-        solution_costs[a]++;
-    }
-
-    // validate, simulate and book keeping completed tasks
-    move(actions);
-    task_book_keeping(actions);
-
-    if (all_tasks_complete()) {
-      break;
-    }
+  while (true) {
+    task_generator_->update_tasks(state_);
+    task_assigner_->assign_tasks(state_);
+    execution_policy_->get_actions(state_);
+    simulator_->simulate_actions(state_);
   }
 }
 

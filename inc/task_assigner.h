@@ -1,16 +1,19 @@
+#ifndef TASK_ASSIGNER_H
+#define TASK_ASSIGNER_H
+
+#include "SharedEnv.h"
 #include "Tasks.h"
 
 namespace task_assigner {
-template <class T, class S> class TaskAssignmentSystem {
+class TaskAssigner {
 public:
-  TaskAssignmentSystem(T *task_assigner) : task_assigner_(task_assigner) {}
+  TaskAssigner() {}
 
-  std::vector<Task> assign_tasks(S state) {
-    task_assigner_->assign_tasks(state);
+  std::vector<Task> assign_tasks(const SharedEnvironment *const state) {
+    return std::vector<Task>();
   }
-
-private:
-  T *task_assigner_;
 };
 
 } // namespace task_assigner
+
+#endif

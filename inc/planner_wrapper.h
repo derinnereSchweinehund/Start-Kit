@@ -1,28 +1,24 @@
+#ifndef PLANNER_WRAPPER_H
+#define PLANNER_WRAPPER_H
+
 #include "ActionModel.h"
 #include "timer.h"
 #include <cstddef>
 #include <future>
 #include <vector>
 
-// TODO: add timeout and preporcess time limit
-
-// int preprocess_time_limit = 10;
-// int plan_time_limit = 3;
-
 namespace planner {
 
-struct metrics_t {
+struct planner_metrics_t {
   size_t num_queries_;
   double planning_time_nanos_;
 
-  metrics_t() : num_queries_(0), planning_time_nanos_(0) {}
+  planner_metrics_t() : num_queries_(0), planning_time_nanos_(0) {}
 };
 
 template <class P> class wrapper {
 public:
-  wrapper(P *planner, double planning_limit_seconds)
-      : planner_(planner), metrics_(), timer_(),
-        planning_limit_seconds_(planning_limit_seconds) {
+  wrapper(P *planner) : planner_(planner), metrics_(), timer_() {
 
     query_(planner_->query);
     result_ = query_.get_future();
@@ -53,15 +49,12 @@ public:
   }
 
   // Returns the metrics of the planner
-  const metrics_t &get_metrics() const { return metrics_; }
+  const planner_metrics_t &get_metrics() const { return metrics_; }
 
 private:
   P *const planner_;
-  metrics_t metrics_;
+  planner_metrics_t metrics_;
   timer timer_;
-  double planning_limit_seconds_;
-
-  // async
 
   std::packaged_task<std::vector<Action>(const std::vector<size_t>,
                                          const std::vector<size_t>, double)>
@@ -70,3 +63,4 @@ private:
 };
 
 } // namespace planner
+#endif // PLANNER_WRAPPER_H

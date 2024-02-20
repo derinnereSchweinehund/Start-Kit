@@ -1,3 +1,6 @@
+#ifndef TIMER_H
+#define TIMER_H
+
 #include <chrono>
 
 class timer {
@@ -34,3 +37,5 @@ private:
         .count();
   }
 };
+
+#endif // TIMER_H
