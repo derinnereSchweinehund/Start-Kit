@@ -8,6 +8,10 @@ class ScheduleTable {
 public:
   ScheduleTable() {}
 
+  void clear() {
+    schedule_.clear();
+  }
+
   void insert_series(int agent_id, vector<State> &locations) {
     for (State place : locations) {
       this->insert_one(agent_id, place.location);
@@ -15,7 +19,7 @@ public:
     return;
   }
 
-  void insert_step(vector<State> &locations) {
+  void insert_step(const vector<State> &locations) {
     for (int i = 0; i < locations.size(); i++) {
       this->insert_one(i, locations.at(i).location);
     }

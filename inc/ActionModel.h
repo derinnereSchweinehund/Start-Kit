@@ -31,7 +31,7 @@ public:
     bool is_valid(const vector<State>& prev, const vector<Action> & action);
     void set_logger(Logger* logger){this->logger = logger;}
 
-    vector<State> result_states(const vector<State>& prev, const vector<Action> & action){
+    vector<State> result_states(const vector<State>& prev, const vector<Action>& action){
         vector<State> next(prev.size());
         for (size_t i = 0 ; i < prev.size(); i ++){
             next[i] = result_state(prev[i], action[i]);
