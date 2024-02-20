@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-2204
+    runs-on: ubuntu-latest
     steps:
     - name: Install boost
       uses: MarkusJx/install-boost@v2.4.5
