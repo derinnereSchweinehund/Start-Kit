@@ -14,6 +14,7 @@
 #include <boost/beast/http/read.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
+#include <sys/socket.h>
 
 namespace beast = boost::beast;
 namespace http = beast::http;
@@ -130,4 +131,22 @@ private:
     }
     return res;
   }
+
+  json get_agent_status() {
+    http::request<http::string_body> req;
+    fill_request(req, http::verb::get, get_path, json::object());
+    http::response<http::dynamic_body> res;
+    int response_code = send_request(req, res);
+
+    if (response_code != 200) {
+      std::cout << "Unsuccessful GET" << std::endl;
+      //TODO: Handle failed connection
+    }
+    // data has 2 fields "locations" : [{x, y, theta, agent_id}], "status" : [SUCEEDED|FAILED|IN-PROGRESS]
+
+    return json::parse(beast::buffers_to_string(res.body().data()));
+  }
+
+
+
 };

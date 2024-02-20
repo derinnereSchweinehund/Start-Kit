@@ -35,9 +35,11 @@ TurtlebotSimulator::simulate_action(vector<Action> &next_actions) {
   http::response<http::dynamic_body> res = send_next_states(next_states);
 
   // Figure out what to do when send failed, retry?
-   
-  // Understand response to create Status codes
 
+  //  Poll for current status
+
+  // Understand response to create Status codes
+  json location_res = get_agent_status();
   vector<Status> status(env->num_of_agents);
 
 
