@@ -34,8 +34,6 @@ jobs:
     - name: Configure CMake
       run: |
           cmake -B build ./ -DCMAKE_BUILD_TYPE=RELEASE
-      env:
-          BOOST_ROOT: ${{ steps.install-boost.outputs.BOOST_ROOT }}
     - name: Run Make
       run: make -C build -j
 
