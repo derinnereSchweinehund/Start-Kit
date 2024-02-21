@@ -9,33 +9,17 @@ on:
 
 jobs:
   build:
+    
     runs-on: ubuntu-latest
     steps:
-    - name: Install boost
-      uses: MarkusJx/install-boost@v2.4.5
-      id: install-boost
-      with:
-          # REQUIRED: Specify the required boost version
-          # A list of supported versions can be found here:
-          # https://github.com/MarkusJx/prebuilt-boost/blob/main/versions-manifest.json
-          boost_version: 1.80.0
-          # OPTIONAL: Specify a platform version
-          platform_version: 22.04
-          # OPTIONAL: Specify a custom install location
-          # boost_install_dir: /home/runner/some_directory
-          # OPTIONAL: Specify a toolset
-          toolset: gcc
-          # OPTIONAL: Specify an architecture
-          # arch: x86
-    
-          # NOTE: If a boost version matching all requirements cannot be found,
-          # this build step will fail
     - uses: actions/checkout@v3
+    - name: Install boost
+      run: |
+        sudo apt -y update
+        sudo apt -y install libboost-dev
     - name: Configure CMake
       run: |
           cmake -B build ./ -DCMAKE_BUILD_TYPE=RELEASE
-      env:
-          BOOST_INCLUDE_DIR: ${{BOOST_ROOT}}
     - name: Run Make
       run: make -C build -j
 
