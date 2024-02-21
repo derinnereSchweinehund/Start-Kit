@@ -9,11 +9,21 @@ namespace task_assigner {
 class TaskAssigner {
 
 public:
-  TaskAssigner() {}
+  TaskAssigner() : agent_id_(0) {}
 
-  std::vector<Task> assign_tasks(const SharedEnvironment *const state) {
-    // TODO: implement default task assignment
+  std::vector<deque<Task>> assign_tasks(const SharedEnvironment *const state) {
+
+    // Assign tasks to agents in a round robin fashion
+    std::vector<deque<Task>> assigned_tasks(state->num_of_agents_);
+    for (size_t task_id; task_id < state->available_tasks_.size(); task_id++) {
+      assigned_tasks[agent_id_].push_back(state->available_tasks_[task_id]);
+      agent_id_ = (agent_id_++) % state->num_of_agents_;
+    }
+    return assigned_tasks;
   }
+
+private:
+  size_t agent_id_;
 };
 
 } // namespace task_assigner

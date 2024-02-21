@@ -47,7 +47,6 @@ void BaseSystem::task_book_keeping(vector<Action> &actions) {
   update_tasks();
 }
 
-
 void BaseSystem::log_preprocessing(bool succ) {
   if (logger == nullptr)
     return;
@@ -78,10 +77,8 @@ void BaseSystem::simulate(int simulation_time) {
     task_assigner_->assign_tasks(state_);
     execution_policy_->get_actions(state_);
     simulator_->simulate_actions(state_);
-
   }
 }
-
 
 void BaseSystem::savePaths(const string &fileName, int option) const {
   std::ofstream output;
@@ -340,49 +337,4 @@ bool FixedAssignSystem::load_agent_tasks(string fname) {
   myfile.close();
 
   return true;
-}
-
-void FixedAssignSystem::update_tasks() {
-  for (int k = 0; k < num_of_agents; k++) {
-    while (assigned_tasks[k].size() < num_tasks_reveal &&
-           !task_queue[k].empty()) {
-      Task task = task_queue[k].front();
-      task_queue[k].pop_front();
-      assigned_tasks[k].push_back(task);
-      events[k].push_back(make_tuple(task.task_id, timestep, "assigned"));
-      all_tasks.push_back(task);
-      // log_event_assigned(k, task.task_id, timestep);
-    }
-  }
-}
-
-void TaskAssignSystem::update_tasks() {
-  for (int k = 0; k < num_of_agents; k++) {
-    while (assigned_tasks[k].size() < num_tasks_reveal && !task_queue.empty()) {
-      Task task = task_queue.front();
-      task.t_assigned = timestep;
-      task.agent_assigned = k;
-      task_queue.pop_front();
-      assigned_tasks[k].push_back(task);
-      events[k].push_back(make_tuple(task.task_id, timestep, "assigned"));
-      all_tasks.push_back(task);
-      // log_event_assigned(k, task.task_id, timestep);
-    }
-  }
-}
-
-void InfAssignSystem::update_tasks() {
-  for (int k = 0; k < num_of_agents; k++) {
-    while (assigned_tasks[k].size() < num_tasks_reveal) {
-      int i = task_counter[k] * num_of_agents + k;
-      int loc = tasks[i % tasks_size];
-      Task task(task_id, loc, timestep, k);
-      assigned_tasks[k].push_back(task);
-      events[k].push_back(make_tuple(task.task_id, timestep, "assigned"));
-      // log_event_assigned(k, task.task_id, timestep);
-      all_tasks.push_back(task);
-      task_id++;
-      task_counter[k]++;
-    }
-  }
 }
