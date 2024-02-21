@@ -5,12 +5,14 @@
 #include "Tasks.h"
 
 namespace task_assigner {
+
 class TaskAssigner {
+
 public:
   TaskAssigner() {}
 
   std::vector<Task> assign_tasks(const SharedEnvironment *const state) {
-    return std::vector<Task>();
+    // TODO: implement default task assignment
   }
 };
 

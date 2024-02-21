@@ -28,8 +28,8 @@ po::variables_map vm;
 void sigint_handler(int a) {
   fprintf(stdout, "stop the simulation...\n");
   if (!vm["evaluationMode"].as<bool>()) {
-    base_system->saveResults(vm["output"].as<std::string>(),
-                             vm["outputScreen"].as<int>());
+    base_system.saveResults(vm["output"].as<std::string>(),
+                            vm["outputScreen"].as<int>());
   }
   _exit(0);
 }
@@ -76,8 +76,17 @@ int main(int argc, char **argv) {
 
   po::notify(vm);
 
+  std::string log_file = vm["logFile"].as<std::string>();
+  Logger logger = Logger(log_file);
   std::string base_folder = vm["inputFolder"].as<std::string>();
   boost::filesystem::path p(vm["inputFile"].as<std::string>());
+  std::string output_file = vm["output"].as<std::string>();
+  int output_screen = vm["outputScreen"].as<int>();
+  bool evaluation_mode = vm["evaluationMode"].as<bool>();
+  int max_simulation_time = vm["simulationTime"].as<int>();
+  int plan_time_limit = vm["planTimeLimit"].as<int>();
+  int preprocess_time_limit = vm["preprocessTimeLimit"].as<int>();
+
   boost::filesystem::path dir = p.parent_path();
   std::string base_folder = dir.string();
   if (base_folder.size() > 0 && base_folder.back() != '/') {
@@ -94,11 +103,23 @@ int main(int argc, char **argv) {
     std::cerr << "Message: " << error.what() << std::endl;
     exit(1);
   }
+
   std::string map_path = read_param_json<std::string>(data, "mapFile");
   int team_size = read_param_json<int>(data, "teamSize");
-  int simulation_time = vm["simulationTime"].as<int>();
-  std::string log_file = vm["logFile"].as<std::string>();
+  int num_task_real = read_param_json<int>(data, "numTasksReveal", 1);
+  std::string agent_file =
+      base_folder + read_param_json<std::string>(data, "agentFile");
+  std::string task_file =
+      base_folder + read_param_json<std::string>(data, "taskFile");
 
+  std::vector<int> agents = read_int_vec(agent_file, team_size);
+  std::vector<int> tasks = read_int_vec(task_file);
+  if (agents.size() > tasks.size()) {
+    logger.log_warning(
+        "Not enough tasks for robots (number of tasks < team size)");
+  }
+
+  // Build and Assemble the system
   SharedEnvironment env(team_size);
   Grid grid(base_folder + map_path);
 
@@ -106,13 +127,18 @@ int main(int argc, char **argv) {
   PerfectSimulator simulator(model, &env);
 
   task_generator::TaskGenerator task_generator;
-
   task_assigner::TaskAssigner task_assigner;
-  planner::MAPFPlanner planner(&grid);
-  planner::MAPFPlannerWrapper wrapped_planner(&planner);
-  execution_policy::MAPFExecutionPolicy execution_policy(&wrapped_planner);
 
-  Logger logger = Logger(log_file);
+#ifdef PYTHON
+#if PYTHON
+// TODO: create a template for the python execution policy and planner
+// planner = new pyMAPFPlanner();
+#else
+  planner::MAPFPlanner planner(&grid);
+#endif
+#endif
+  planner::MAPFPlannerWrapper wrapped_planner(&planner, &logger);
+  execution_policy::MAPFExecutionPolicy execution_policy(&wrapped_planner);
 
   base_system::BaseSystem<task_generator::TaskGenerator,
                           task_assigner::TaskAssigner,
@@ -121,56 +147,10 @@ int main(int argc, char **argv) {
       base_system(&task_generator, &task_assigner, &execution_policy,
                   &wrapped_planner, &simulator, &logger);
 
-  base_system.simulate(simulation_time);
+  signal(SIGINT, sigint_handler);
+  base_system.simulate(max_simulation_time);
+  base_system.saveResults(output_file, output_screen);
 
-  // Planner is inited here, but will be managed and deleted by system_ptr
-  // deconstructor
-  // if (vm["evaluationMode"].as<bool>()) {
   // logger->log_info("running the evaluation mode");
   // planner = new DummyPlanner(vm["output"].as<std::string>());
-  //}
-  // else {
-  // #ifdef PYTHON
-  // #if PYTHON
-  // planner = new pyMAPFPlanner();
-  // #else
-  // planner = new MAPFPlanner();
-  // #endif
-  // #endif
-  // }
-
-  // planner->env->map_name = map_path.substr(map_path.find_last_of("/") + 1);
-  // planner->env->file_storage_path = vm["fileStoragePath"].as<std::string>();
-
-  // model->set_logger(logger);
-
-  // int team_size = read_param_json<int>(data, "teamSize");
-
-  // std::vector<int> agents = read_int_vec(
-  // base_folder + read_param_json<std::string>(data, "agentFile"), team_size);
-  // std::vector<int> tasks = read_int_vec(
-  // base_folder + read_param_json<std::string>(data, "taskFile"));
-  // if (agents.size() > tasks.size())
-  // logger->log_warning(
-  //"Not enough tasks for robots (number of tasks < team size)");
-
-  // system_ptr->set_logger(logger);
-  // system_ptr->set_plan_time_limit(vm["planTimeLimit"].as<int>());
-  // system_ptr->set_preprocess_time_limit(vm["preprocessTimeLimit"].as<int>());
-
-  // system_ptr->set_num_tasks_reveal(
-  // read_param_json<int>(data, "numTasksReveal", 1));
-
-  // signal(SIGINT, sigint_handler);
-
-  // system_ptr->simulate(vm["simulationTime"].as<int>());
-
-  // if (!vm["evaluationMode"].as<bool>()) {
-  // system_ptr->saveResults(vm["output"].as<std::string>(),
-  // vm["outputScreen"].as<int>());
-  //}
-
-  // delete model;
-  // delete logger;
-  //_exit(0);
 }

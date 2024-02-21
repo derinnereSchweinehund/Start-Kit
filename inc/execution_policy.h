@@ -9,13 +9,12 @@ public:
   ExecutionPolicy(P *planner) : planner_(planner_) {}
 
   std::vector<Action> &get_actions(const SharedEnvironment &state) {
-
-    return planner_->query(state.current_states_, state.goal_locations);
+    return planner_->query(state.current_states_, state.assigned_tasks_);
   }
 
 private:
   P *const planner_;
 };
 
-typedef planner::wrapper<planner::MAPFPlannerWrapper> MAPFExecutionPolicy;
+typedef ExecutionPolicy<planner::MAPFPlannerWrapper> MAPFExecutionPolicy;
 } // namespace execution_policy

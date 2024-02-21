@@ -19,7 +19,8 @@ struct planner_metrics_t {
 
 template <class P> class wrapper {
 public:
-  wrapper(P *planner) : planner_(planner), metrics_(), timer_() {
+  wrapper(P *planner, Logger *logger)
+      : planner_(planner), metrics_(), timer_(), logger_(logger) {
 
     query_(planner_->query);
     result_ = query_.get_future();
@@ -43,6 +44,8 @@ public:
         std::future_status::ready) {
       task.join();
       std::vector<Action> actions = result_.get();
+    } else {
+      logger_->log_info("planner timeout");
     }
 
     metrics_.planning_time_nanos_ += timer_.elapsed_time_nano();
@@ -55,7 +58,8 @@ public:
 private:
   P *const planner_;
   planner_metrics_t metrics_;
-  timer timer_;
+  Timer timer_;
+  Logger *const logger_;
 
   std::packaged_task<std::vector<Action>(const std::vector<size_t>,
                                          const std::vector<size_t>, double)>

@@ -3,9 +3,9 @@
 
 #include <chrono>
 
-class timer {
+class Timer {
 public:
-  timer() : start_time_() {}
+  Timer() : start_time_() {}
 
   void start() { start_time_ = std::chrono::high_resolution_clock::now(); }
 

@@ -11,7 +11,7 @@ class MAPFPlanner {
 public:
   const Grid *const grid_;
 
-  MAPFPlanner(const Grid *const grid) : grid_(grid){};
+  MAPFPlanner(Grid *const grid) : grid_(grid){};
   ~MAPFPlanner() {}
 
   std::vector<HeuristicTable> heuristics;

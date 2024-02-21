@@ -13,7 +13,7 @@ struct SharedEnvironment {
   std::vector<Task> available_tasks_;
 
   std::vector<State> current_states_;
-  std::vector<Task> assigned_tasks_;
+  std::vector<deque<Task>> assigned_tasks_;
   std::vector<Action> assigned_actions_;
   std::vector<Status> current_status_;
 
