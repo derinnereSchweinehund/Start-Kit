@@ -5,6 +5,8 @@ namespace task_generator {
 
 class TaskGenerator {
 public:
+  TaskGenerator(std::vector<Task> tasks) : all_tasks_(tasks) {}
+
   bool update_task(SharedEnvironment *state) {
     // TODO: mutate current state
     // - check current positions and tick off completed task.
@@ -12,6 +14,6 @@ public:
   }
 
 private:
-  list<Task> all_tasks_;
+  std::vector<Task> all_tasks_;
 };
 } // namespace task_generator

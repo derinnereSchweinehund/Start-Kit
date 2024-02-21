@@ -126,7 +126,7 @@ int main(int argc, char **argv) {
   ActionModelWithRotate model = ActionModelWithRotate(grid);
   PerfectSimulator simulator(model, &env);
 
-  task_generator::TaskGenerator task_generator;
+  task_generator::TaskGenerator task_generator(tasks);
   task_assigner::TaskAssigner task_assigner;
 
 #ifdef PYTHON

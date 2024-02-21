@@ -11,6 +11,7 @@ namespace base_system {
 struct metrics_t {
   std::vector<vector<Action>> actual_movements;
   std::vector<vector<Action>> planner_movements;
+  std::vector<Path> paths;
   std::vector<size_t> solution_costs;
   size_t num_of_task_finish = 0;
 };

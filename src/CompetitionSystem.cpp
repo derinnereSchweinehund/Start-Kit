@@ -7,89 +7,56 @@
 
 using json = nlohmann::ordered_json;
 
-bool BaseSystem::all_tasks_complete() {
-  for (auto &t : assigned_tasks) {
-    if (!t.empty()) {
-      return false;
-    }
-  }
-  return true;
-}
+namespace base_system {
+// void BaseSystem::log_preprocessing(bool succ) {
+// if (logger == nullptr)
+// return;
+// if (succ) {
+// logger->log_info("Preprocessing success", timestep);
+//} else {
+// logger->log_fatal("Preprocessing timeout", timestep);
+//}
+// logger->flush();
+//}
 
-void BaseSystem::task_book_keeping(vector<Action> &actions) {
+// void BaseSystem::log_event_assigned(int agent_id, int task_id, int timestep)
+// { logger->log_info("Task " + std::to_string(task_id) + " is assigned to agent
+//" + std::to_string(agent_id),
+// timestep);
+//}
 
-  list<Task> finished_tasks_this_timestep; // <agent_id, task_id, timestep>
+// void BaseSystem::log_event_finished(int agent_id, int task_id, int timestep)
+// { logger->log_info("Agent " + std::to_string(agent_id) + " finishes task " +
+// std::to_string(task_id),
+// timestep);
+//}
 
-  for (int k = 0; k < num_of_agents; k++) {
-    if (!assigned_tasks[k].empty() &&
-        curr_states[k].location == assigned_tasks[k].front().location) {
-      Task task = assigned_tasks[k].front();
-      assigned_tasks[k].pop_front();
-      task.t_completed = timestep;
-      finished_tasks_this_timestep.push_back(task);
-      events[k].push_back(make_tuple(task.task_id, timestep, "finished"));
-      // log_event_finished(k, task.task_id, timestep);
-    }
-    paths[k].push_back(curr_states[k]);
-    // Use this paths[] to verify for 1-robustness in MAPF-DP, generate a
-    // warning for now? Feels like I should add a MAPF-DP flag?
+template <class Task_Generator, class Task_Assigner, class Execution_Policy,
+          class Planner, class Simulator>
+void BaseSystem<Task_Generator, Task_Assigner, Execution_Policy, Planner,
+                Simulator>::simulate(int simulation_time) {
 
-    actual_movements[k].push_back(actions[k]);
-  }
-  // update tasks
-  //
-  for (auto task : finished_tasks_this_timestep) {
-    finished_tasks[task.agent_assigned].emplace_back(task);
-    num_of_task_finish++;
-  }
-
-  // TODO: this should be dependency injection
-  update_tasks();
-}
-
-void BaseSystem::log_preprocessing(bool succ) {
-  if (logger == nullptr)
-    return;
-  if (succ) {
-    logger->log_info("Preprocessing success", timestep);
-  } else {
-    logger->log_fatal("Preprocessing timeout", timestep);
-  }
-  logger->flush();
-}
-
-void BaseSystem::log_event_assigned(int agent_id, int task_id, int timestep) {
-  logger->log_info("Task " + std::to_string(task_id) +
-                       " is assigned to agent " + std::to_string(agent_id),
-                   timestep);
-}
-
-void BaseSystem::log_event_finished(int agent_id, int task_id, int timestep) {
-  logger->log_info("Agent " + std::to_string(agent_id) + " finishes task " +
-                       std::to_string(task_id),
-                   timestep);
-}
-
-void BaseSystem::simulate(int simulation_time) {
-
-  while (task_generator_->update_tasks(state_);) {
+  while (task_generator_->update_tasks(state_)) {
     task_assigner_->assign_tasks(state_);
     // TODO: validate user defined functions
     execution_policy_->get_actions(state_);
     // TODO: validate user defined functions
     simulator_->simulate_actions(state_);
-    tine_step++;
   }
 }
 
-void BaseSystem::savePaths(const string &fileName, int option) const {
+template <class Task_Generator, class Task_Assigner, class Execution_Policy,
+          class Planner, class Simulator>
+void BaseSystem<Task_Generator, Task_Assigner, Execution_Policy, Planner,
+                Simulator>::savePaths(const string &fileName,
+                                      int option) const {
   std::ofstream output;
   output.open(fileName, std::ios::out);
-  for (int i = 0; i < num_of_agents; i++) {
+  for (int i = 0; i < state_.num_of_agents_; i++) {
     output << "Agent " << i << ": ";
     if (option == 0) {
       bool first = true;
-      for (const auto t : actual_movements[i]) {
+      for (const auto t : metrics_.actual_movements[i]) {
         if (!first) {
           output << ",";
         } else {
@@ -99,7 +66,7 @@ void BaseSystem::savePaths(const string &fileName, int option) const {
       }
     } else if (option == 1) {
       bool first = true;
-      for (const auto t : planner_movements[i]) {
+      for (const auto t : metrics_.planner_movements[i]) {
         if (!first) {
           output << ",";
         } else {
@@ -109,7 +76,7 @@ void BaseSystem::savePaths(const string &fileName, int option) const {
       }
     } else if (option == 3) {
       bool first = true;
-      for (const auto t : paths[i]) {
+      for (const auto t : metrics_.paths[i]) {
         if (!first) {
           output << ",";
         } else {
@@ -123,7 +90,11 @@ void BaseSystem::savePaths(const string &fileName, int option) const {
   output.close();
 }
 
-void BaseSystem::saveResults(const string &fileName, int screen) const {
+template <class Task_Generator, class Task_Assigner, class Execution_Policy,
+          class Planner, class Simulator>
+void BaseSystem<Task_Generator, Task_Assigner, Execution_Policy, Planner,
+                Simulator>::saveResults(const string &fileName,
+                                        int screen) const {
   json js;
   // Save action model
   js["actionModel"] = "MAPF_T";
@@ -131,12 +102,12 @@ void BaseSystem::saveResults(const string &fileName, int screen) const {
   std::string feasible = fast_mover_feasible ? "Yes" : "No";
   js["AllValid"] = feasible;
 
-  js["teamSize"] = num_of_agents;
+  js["teamSize"] = state_.num_of_agents_;
 
   // Save start locations[x,y,orientation]
   if (screen <= 2) {
     json start = json::array();
-    for (int i = 0; i < num_of_agents; i++) {
+    for (int i = 0; i < state_.num_of_agents_; i++) {
       json s = json::array();
       s.push_back(starts[i].location / map.cols);
       s.push_back(starts[i].location % map.cols);
@@ -290,53 +261,54 @@ void BaseSystem::saveResults(const string &fileName, int screen) const {
   f << std::setw(4) << js;
 }
 
-bool FixedAssignSystem::load_agent_tasks(string fname) {
-  string line;
-  std::ifstream myfile(fname.c_str());
-  if (!myfile.is_open())
-    return false;
+//bool FixedAssignSystem::load_agent_tasks(string fname) {
+  //string line;
+  //std::ifstream myfile(fname.c_str());
+  //if (!myfile.is_open())
+    //return false;
 
-  getline(myfile, line);
-  while (!myfile.eof() && line[0] == '#') {
-    getline(myfile, line);
-  }
+  //getline(myfile, line);
+  //while (!myfile.eof() && line[0] == '#') {
+    //getline(myfile, line);
+  //}
 
-  boost::char_separator<char> sep(",");
-  boost::tokenizer<boost::char_separator<char>> tok(line, sep);
-  boost::tokenizer<boost::char_separator<char>>::iterator beg = tok.begin();
+  //boost::char_separator<char> sep(",");
+  //boost::tokenizer<boost::char_separator<char>> tok(line, sep);
+  //boost::tokenizer<boost::char_separator<char>>::iterator beg = tok.begin();
 
-  num_of_agents = atoi((*beg).c_str());
-  int task_id = 0;
-  // My benchmark
-  if (num_of_agents == 0) {
-    // issue_logs.push_back("Load file failed");
-    std::cerr << "The number of agents should be larger than 0" << endl;
-    exit(-1);
-  }
-  starts.resize(num_of_agents);
-  task_queue.resize(num_of_agents);
+  //num_of_agents = atoi((*beg).c_str());
+  //int task_id = 0;
+  //// My benchmark
+  //if (num_of_agents == 0) {
+    //// issue_logs.push_back("Load file failed");
+    //std::cerr << "The number of agents should be larger than 0" << endl;
+    //exit(-1);
+  //}
+  //starts.resize(num_of_agents);
+  //task_queue.resize(num_of_agents);
 
-  for (int i = 0; i < num_of_agents; i++) {
+  //for (int i = 0; i < num_of_agents; i++) {
 
-    getline(myfile, line);
-    while (!myfile.eof() && line[0] == '#')
-      getline(myfile, line);
+    //getline(myfile, line);
+    //while (!myfile.eof() && line[0] == '#')
+      //getline(myfile, line);
 
-    boost::tokenizer<boost::char_separator<char>> tok(line, sep);
-    boost::tokenizer<boost::char_separator<char>>::iterator beg = tok.begin();
-    // read start [row,col] for agent i
-    int num_landmarks = atoi((*beg).c_str());
-    beg++;
-    auto loc = atoi((*beg).c_str());
-    // agent_start_locations[i] = {loc, 0};
-    starts[i] = State(loc, 0, 0);
-    beg++;
-    for (int j = 0; j < num_landmarks; j++, beg++) {
-      auto loc = atoi((*beg).c_str());
-      task_queue[i].emplace_back(task_id++, loc, 0, i);
-    }
-  }
-  myfile.close();
+    //boost::tokenizer<boost::char_separator<char>> tok(line, sep);
+    //boost::tokenizer<boost::char_separator<char>>::iterator beg = tok.begin();
+    //// read start [row,col] for agent i
+    //int num_landmarks = atoi((*beg).c_str());
+    //beg++;
+    //auto loc = atoi((*beg).c_str());
+    //// agent_start_locations[i] = {loc, 0};
+    //starts[i] = State(loc, 0, 0);
+    //beg++;
+    //for (int j = 0; j < num_landmarks; j++, beg++) {
+      //auto loc = atoi((*beg).c_str());
+      //task_queue[i].emplace_back(task_id++, loc, 0, i);
+    //}
+  //}
+  //myfile.close();
 
-  return true;
-}
+  //return true;
+//}
+} // namespace base_system
