@@ -2,6 +2,7 @@
 #define PLANNER_WRAPPER_H
 
 #include "ActionModel.h"
+#include "MAPFPlanner.h"
 #include "timer.h"
 #include <cstddef>
 #include <future>
@@ -61,6 +62,8 @@ private:
       query_;
   std::future<std::vector<Action>> result_;
 };
+
+typedef wrapper<MAPFPlanner> MAPFPlannerWrapper;
 
 } // namespace planner
 #endif // PLANNER_WRAPPER_H

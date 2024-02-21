@@ -19,7 +19,7 @@ bool BaseSystem::all_tasks_complete() {
 void BaseSystem::task_book_keeping(vector<Action> &actions) {
 
   list<Task> finished_tasks_this_timestep; // <agent_id, task_id, timestep>
-                                           //
+
   for (int k = 0; k < num_of_agents; k++) {
     if (!assigned_tasks[k].empty() &&
         curr_states[k].location == assigned_tasks[k].front().location) {
@@ -201,6 +201,7 @@ void BaseSystem::simulate(int simulation_time) {
     task_assigner_->assign_tasks(state_);
     execution_policy_->get_actions(state_);
     simulator_->simulate_actions(state_);
+
   }
 }
 

@@ -15,19 +15,18 @@ struct metrics_t {
   size_t num_of_task_finish = 0;
 };
 
-template <class Simulator, class Task_Assigner, class Execution_Policy,
-          class Task_Generator, class Planner>
+template <class Task_Generator, class Task_Assigner, class Execution_Policy,
+          class Planner, class Simulator>
 class BaseSystem {
 public:
   BaseSystem(Task_Generator *task_generator, Task_Assigner *task_assigner,
              Execution_Policy *execution_policy, Planner *planner,
-             Simulator *simulator)
+             Simulator *simulator, Logger *logger)
       : task_generator_(task_generator), task_assigner_(task_assigner),
-        state_(simulator->get_num_agents()),
         execution_policy_(execution_policy), planner_(planner),
-        simulator_(simulator) {}
+        simulator_(simulator), logger_(logger) {}
 
-  virtual ~BaseSystem() {
+  ~BaseSystem() {
     // safely exit: wait for join the thread then delete planner and exit
     if (started) {
       task_td.join();
@@ -51,7 +50,7 @@ private:
   Execution_Policy *execution_policy_;
   Planner *planner_;
   Simulator *simulator_;
-  Logger *logger = nullptr;
+  Logger *logger_ = nullptr;
 
   SharedEnvironment state_;
   metrics_t metrics_;
@@ -71,7 +70,7 @@ private:
 
   void initialize();
   bool planner_initialize();
-  virtual void update_tasks() = 0;
+  void update_tasks();
 
   void sync_shared_env();
   bool all_tasks_complete();
@@ -173,6 +172,7 @@ private:
 // tasks_size = tasks.size();
 
 // for (size_t i = 0; i < start_locs.size(); i++) {
+//
 // if (grid.map[start_locs[i]] == 1) {
 // cout << "error: agent " << i << "'s start location is an obstacle("
 //<< start_locs[i] << ")" << endl;

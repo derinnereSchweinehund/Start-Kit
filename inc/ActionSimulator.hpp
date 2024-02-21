@@ -27,8 +27,7 @@ public:
   }
 
   bool validate_safe(const vector<Action> &next_actions) override {
-    vector<State> next_states =
-        model.result_states(env->curr_states, next_actions);
+    vector<State> next_states = model.result_states(env->curr_states, next_actions);
     // Check vertex conflicts
     for (int i = 0; i < env->num_of_agents; i++) {
       for (int j = i + 1; j < env->num_of_agents; j++) {
@@ -41,14 +40,14 @@ public:
     // If current and next state coincide in direction
     for (int i = 0; i < env->num_of_agents; i++) {
       for (int j = 0; j < env->num_of_agents; i++) {
-        if (next_states.at(i).location == env->curr_states.at(j).location &&
-            next_states.at(j).location == env->curr_states.at(i).location) {
+        if (next_states.at(i).location == env->curr_states.at(j).location && next_states.at(j).location == env->curr_states.at(i).location){
           return false;
         }
       }
     }
     return true;
   }
+
 };
 
 // Implements delay probability for MAPF-DP

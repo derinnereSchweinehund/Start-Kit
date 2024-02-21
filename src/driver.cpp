@@ -1,5 +1,5 @@
+#include "ActionSimulator.hpp"
 #include "CompetitionSystem.h"
-#include "ExecutionSimulator.h"
 #include "MAPFPlanner.h"
 #include "execution_policy.h"
 #include "nlohmann/json.hpp"
@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
 
   po::notify(vm);
 
-  // std::string base_folder = vm["inputFolder"].as<std::string>();
+  std::string base_folder = vm["inputFolder"].as<std::string>();
   boost::filesystem::path p(vm["inputFile"].as<std::string>());
   boost::filesystem::path dir = p.parent_path();
   std::string base_folder = dir.string();
@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
     base_folder += "/";
   }
 
-  auto input_json_file = vm["inputFile"].as<std::string>();
+  std::string input_json_file = vm["inputFile"].as<std::string>();
   json data;
   std::ifstream f(input_json_file);
   try {
@@ -94,28 +94,34 @@ int main(int argc, char **argv) {
     std::cerr << "Message: " << error.what() << std::endl;
     exit(1);
   }
+  std::string map_path = read_param_json<std::string>(data, "mapFile");
+  int team_size = read_param_json<int>(data, "teamSize");
+  int simulation_time = vm["simulationTime"].as<int>();
+  std::string log_file = vm["logFile"].as<std::string>();
 
-  task_generator::TaskGenerator task_generator;
-  task_assigner::TaskAssigner task_assigner;
-
-  auto map_path = read_param_json<std::string>(data, "mapFile");
+  SharedEnvironment env(team_size);
   Grid grid(base_folder + map_path);
-  MAPFPlanner planner;
-  planner::wrapper<MAPFPlanner> wrapped_planner(planner);
-  execution_policy::ExecutionPolicy execution_policy(&wrapped_planner);
 
   ActionModelWithRotate model = ActionModelWithRotate(grid);
-  ActionSimulator simulator_;
-  Logger logger = Logger(vm["logFile"].as<std::string>());
+  PerfectSimulator simulator(model, &env);
 
-  // template <class Simulator, class Task_Assigner, class Execution_Policy,
-  // class Task_Generator, class Planner>
-  BaseSystem<ActionSimulator, Task_Assigner, ExecutionPolicy, Task_Generator,
-             planner::wrapper<MAPFPlanner>>
-      base_system(simulator_, task_assigner, execution_policy, task_generator,
-                  wrapped_planner);
+  task_generator::TaskGenerator task_generator;
 
-  base_system.simulate(vm["simulationTime"].as<int>());
+  task_assigner::TaskAssigner task_assigner;
+  planner::MAPFPlanner planner(&grid);
+  planner::MAPFPlannerWrapper wrapped_planner(&planner);
+  execution_policy::MAPFExecutionPolicy execution_policy(&wrapped_planner);
+
+  Logger logger = Logger(log_file);
+
+  base_system::BaseSystem<task_generator::TaskGenerator,
+                          task_assigner::TaskAssigner,
+                          execution_policy::MAPFExecutionPolicy,
+                          planner::MAPFPlannerWrapper, PerfectSimulator>
+      base_system(&task_generator, &task_assigner, &execution_policy,
+                  &wrapped_planner, &simulator, &logger);
+
+  base_system.simulate(simulation_time);
 
   // Planner is inited here, but will be managed and deleted by system_ptr
   // deconstructor
