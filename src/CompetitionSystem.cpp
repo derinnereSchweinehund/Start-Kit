@@ -72,11 +72,13 @@ void BaseSystem::log_event_finished(int agent_id, int task_id, int timestep) {
 
 void BaseSystem::simulate(int simulation_time) {
 
-  while (true) {
-    task_generator_->update_tasks(state_);
+  while (task_generator_->update_tasks(state_);) {
     task_assigner_->assign_tasks(state_);
+    // TODO: validate user defined functions
     execution_policy_->get_actions(state_);
+    // TODO: validate user defined functions
     simulator_->simulate_actions(state_);
+    tine_step++;
   }
 }
 
