@@ -1,6 +1,6 @@
 #include "ActionModel.h"
 #include "SharedEnv.h"
-#include "Status.hpp"
+// #include "Status.hpp"
 #include <boost/asio/io_service.hpp>
 #include <random>
 
@@ -20,10 +20,10 @@ protected:
                           const SharedEnvironment *env,
                           ActionModelWithRotate &model) {
     vector<State> next_states =
-        model.result_states(env->curr_states, next_actions);
+        model.result_states(env->current_states_, next_actions);
     // Check vertex conflicts
-    for (int i = 0; i < env->num_of_agents; i++) {
-      for (int j = i + 1; j < env->num_of_agents; j++) {
+    for (int i = 0; i < env->num_of_agents_; i++) {
+      for (int j = i + 1; j < env->num_of_agents_; j++) {
         if (next_states.at(i).location == next_states.at(j).location) {
           return false;
         }
@@ -31,10 +31,10 @@ protected:
     }
     // Check for edge conflicts
     // If current and next state coincide in direction
-    for (int i = 0; i < env->num_of_agents; i++) {
-      for (int j = 0; j < env->num_of_agents; i++) {
-        if (next_states.at(i).location == env->curr_states.at(j).location &&
-            next_states.at(j).location == env->curr_states.at(i).location) {
+    for (int i = 0; i < env->num_of_agents_; i++) {
+      for (int j = 0; j < env->num_of_agents_; i++) {
+        if (next_states.at(i).location == env->current_states_.at(j).location &&
+            next_states.at(j).location == env->current_states_.at(i).location) {
           return false;
         }
       }
@@ -46,18 +46,18 @@ protected:
                         const SharedEnvironment *env,
                         ActionModelWithRotate &model) {
     // Check for vertex and edge conflicts
-    assert(next_actions.size() == env->num_of_agents);
+    assert(next_actions.size() == env->num_of_agents_);
     if (!validate_unfailing(next_actions, env, model)) {
       return false;
     }
     // Check for 1-robustness
     unordered_set<int> occupied_before;
-    const vector<State> &curr_states = env->curr_states;
-    for (int i = 0; i < env->num_of_agents; i++) {
+    const vector<State> &curr_states = env->current_states_;
+    for (int i = 0; i < env->num_of_agents_; i++) {
       occupied_before.insert({curr_states[i].location});
     }
     vector<State> next_states = model.result_states(curr_states, next_actions);
-    for (int i = 0; i < env->num_of_agents; i++) {
+    for (int i = 0; i < env->num_of_agents_; i++) {
       auto res = occupied_before.find(next_states[i].location);
       if (res != occupied_before.end()) {
         return false;
