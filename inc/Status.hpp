@@ -1,2 +1,2 @@
 
-enum Status { SUCCESS, EXECUTING, FAILED };
+enum Status { SUCCEEDED, EXECUTING, FAILED, UNKNOWN };

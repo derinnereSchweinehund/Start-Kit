@@ -2,7 +2,9 @@
 #include "ActionSimulator.hpp"
 #include "FreeState.h"
 #include "SharedEnv.h"
+#include "States.h"
 #include "nlohmann/json.hpp"
+#include <algorithm>
 #include <boost/asio/io_service.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
@@ -61,7 +63,7 @@ private:
   }
   // I could create a whole http client component class
 
-  json stateToJSON(int agent_id, FreeState &state) {
+  json stateToJson(int agent_id, FreeState &state) {
     json obj = json::object();
 
     obj["x"] = state.x;
@@ -79,7 +81,7 @@ private:
 
     for (int i = 0; i < env->num_of_agents; i++) {
       FreeState next = transform_state(next_states.at(i));
-      plans.push_back(stateToJSON(i, next));
+      plans.push_back(stateToJson(i, next));
     }
 
     payload["plans"] = plans;
@@ -147,6 +149,43 @@ private:
     return json::parse(beast::buffers_to_string(res.body().data()));
   }
 
+  State jsonToState(json state_json, int timestep) {
+    int x = state_json["x"].get<int>();
+    int y = abs(state_json["y"].get<int>());
+    int theta = state_json["theta"].get<int>();
+    int agent_id = state_json["agent_id"].get<int>();
+    return State(xy_to_location(x, y), timestep,
+              ((theta + 45) / 90) % 4); // Map 0-360 to 0-3
+  }
 
+  vector<State> parseStates(json::array_t json_states, int timestep) {
+    vector<State> curr_states(env->num_of_agents);
+    for (int i = 0; i < json_states.size(); i++) {
+      json agent_state = json_states[i];
+      curr_states.at(agent_state["agent_id"]) = jsonToState(agent_state, timestep);
+      }
+    // Guarantee that every agent is initiliased???
+    return curr_states;
+  }
+
+  vector<Status> parseStatus(json::array_t json_status){
+    vector<Status> curr_status(env->num_of_agents, Status::UNKNOWN);
+    for (int i = 0; i < json_status.size(); i++) {
+      json agent_status = curr_status[i];
+      string status_str = agent_status["status"].get<string>();
+      for (auto & c: status_str) c = std::toupper((unsigned char)c);
+      if (status_str == "EXECUTING") {
+        curr_status.at(agent_status["agent_id"].get<int>()) = Status::EXECUTING;
+      } else if (status_str == "FAILED") {
+        curr_status.at(agent_status["agent_id"].get<int>()) = Status::FAILED;
+      } else if (status_str == "SUCCEEDED") {
+        curr_status.at(agent_status["agent_id"].get<int>()) = Status::SUCCEEDED;
+      } else {
+        curr_status.at(agent_status["agent_id"].get<int>()) = Status::UNKNOWN;
+      }
+    }
+
+    return curr_status;
+  }
 
 };

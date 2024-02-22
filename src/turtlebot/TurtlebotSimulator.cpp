@@ -36,13 +36,11 @@ TurtlebotSimulator::simulate_action(vector<Action> &next_actions) {
 
   // Figure out what to do when send failed, retry?
 
-  //  Poll for current status
-
   // Understand response to create Status codes
-  json location_res = get_agent_status();
-  vector<Status> status(env->num_of_agents);
+  json agent_results = get_agent_status();
 
-
-
-  return status;
+  vector<State> curr_states = parseStates(agent_results["locations"], env->curr_timestep);
+  vector<Status> curr_status = parseStatus(agent_results["status"]);
+  env->curr_states = curr_states;
+  return curr_status;
 }
