@@ -42,6 +42,6 @@ TurtlebotSimulator::simulate_action(vector<Action> &next_actions) {
   vector<State> curr_states = parseStates(agent_results["locations"], env->curr_timestep);
   vector<Status> curr_status = parseStatus(agent_results["status"]);
   env->current_states_ = curr_states;
-  env->curr_status = curr_status;
+  env->current_status_ = curr_status;
   return curr_status;
 }

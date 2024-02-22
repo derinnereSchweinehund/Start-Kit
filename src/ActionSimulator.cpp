@@ -6,10 +6,11 @@
 
 vector<Status> PerfectSimulator::simulate_action(vector<Action> &next_actions) {
   if (!validate_safe(next_actions)) {
-    return vector<Status>(env->num_of_agents, Status::FAILED);
+    return vector<Status>(env->num_of_agents_, Status::FAILED);
   }
-  env->curr_states = model.result_states(env->curr_states, next_actions);
-  return vector<Status>(env->num_of_agents, Status::SUCCEEDED);
+  env->current_states_ = model.result_states(env->current_states_, next_actions);
+
+  env->current_status_ = vector<Status>(env->num_of_agents_, Status::SUCCEEDED);
 }
 
 bool PerfectSimulator::validate_safe(const vector<Action> &next_actions) {
@@ -23,19 +24,19 @@ bool ProbabilisticSimulator::validate_safe(const vector<Action> &next_actions) {
 vector<Status>
 ProbabilisticSimulator::simulate_action(vector<Action> &next_actions) {
   if (!validate_safe(next_actions)) {
-    return vector<Status>(env->num_of_agents, Status::FAILED);
+    return vector<Status>(env->num_of_agents_, Status::FAILED);
   }
 
-  vector<Status> progress(env->num_of_agents);
-  for (int i = 0; i < env->num_of_agents; i++) {
+  vector<Status> progress(env->num_of_agents_);
+  for (int i = 0; i < env->num_of_agents_; i++) {
     // Succeeds success_chance % of the time, never if <=0 and always if >=1
     if (success_chance_ > distrib_(gen_)) {
       progress[i] = Status::SUCCEEDED;
-      State &curr = env->curr_states.at(i);
+      State &curr = env->current_states_.at(i);
       curr = model.result_state(curr, next_actions.at(i));
     } else {
       progress[i] = Status::FAILED;
     }
   }
-  return progress;
+  env->current_status_ = progress;
 }
