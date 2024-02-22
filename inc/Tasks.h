@@ -8,7 +8,6 @@ struct Task
     int t_completed = -1;
     int agent_assigned = -1;
 
-
     Task(int task_id, int location): task_id(task_id), location(location) {};
     Task(int task_id, int location, int t_assigned, int agent_assigned):
         task_id(task_id), location(location),
