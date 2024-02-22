@@ -118,17 +118,15 @@ int main(int argc, char **argv) {
 
   std::vector<int> agents = read_int_vec(agent_file, team_size);
 
-  // Load tasks
-  std::ifstream task_file_stream(task_file.c_str());
-  task_generator::TaskGenerator task_generator(task_file_stream);
-  task_file_stream.close();
-
   // Build and Assemble the system
+  task_generator::TaskGenerator task_generator(task_file);
+  task_assigner::TaskAssigner task_assigner;
+
   SharedEnvironment state(team_size);
   Grid grid(map_file);
   ActionModelWithRotate model(grid);
   PerfectSimulator simulator(model);
-  task_assigner::TaskAssigner task_assigner;
+
   planner::MAPFPlanner planner(&grid);
   planner::MAPFPlannerWrapper wrapped_planner(&planner, &logger);
   execution_policy::MAPFExecutionPolicy execution_policy(&wrapped_planner);
@@ -140,7 +138,7 @@ int main(int argc, char **argv) {
       system(&task_generator, &task_assigner, &execution_policy,
              &wrapped_planner, &simulator, &logger);
 
-  //signal(SIGINT, sigint_handler);
+  // signal(SIGINT, sigint_handler);
 
   system.simulate(&state, max_simulation_time);
 

@@ -14,15 +14,17 @@ struct task_generator_metrics_t {
 
 class TaskGenerator {
 public:
-  TaskGenerator(std::ifstream &istream)
+  TaskGenerator(std::string task_file)
       : all_tasks_(), timer_(), num_revealed_tasks_(0), reveal_interval_(10),
         max_to_reveal_(5) {
 
-    size_t num_of_tasks = istream.get();
+    std::ifstream task_file_stream(task_file.c_str());
+    size_t num_of_tasks = task_file_stream.get();
     for (size_t i = 0; i < num_of_tasks; i++) {
-      uint32_t location = istream.get();
+      uint32_t location = task_file_stream.get();
       all_tasks_.emplace_back(i, location);
     }
+    task_file_stream.close();
   }
 
   // - update the task generator state
