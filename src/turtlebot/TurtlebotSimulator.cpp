@@ -21,7 +21,7 @@ TurtlebotSimulator::validate_safe(const vector<Action> &next_actions) {
   return validate_unfailing(next_actions, env, model);
 }
 
-
+//TODO: Make this function mutate the shared state status
 vector<Status>
 TurtlebotSimulator::simulate_action(vector<Action> &next_actions) {
   if (!validate_safe(next_actions)) {
@@ -42,5 +42,6 @@ TurtlebotSimulator::simulate_action(vector<Action> &next_actions) {
   vector<State> curr_states = parseStates(agent_results["locations"], env->curr_timestep);
   vector<Status> curr_status = parseStatus(agent_results["status"]);
   env->curr_states = curr_states;
+  env->curr_status = curr_status;
   return curr_status;
 }

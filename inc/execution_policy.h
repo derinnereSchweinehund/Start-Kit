@@ -22,7 +22,6 @@ private:
 // by queuing reservations on each location
 // Using the ActionModelWithRotate to predict result states of actions
 template <class P> class MinimumCommunicationPolicy {
-
 public:
   MinimumCommunicationPolicy(P *planner, int buffer_size) :
   planner_(planner), schedule_(){}
