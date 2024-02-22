@@ -13,7 +13,8 @@ namespace task_generator {
 class TaskGenerator {
 public:
   TaskGenerator(std::ifstream &istream)
-      : all_tasks_(), timer_(), num_revealed_tasks_(0), reveal_interval_(1) {
+      : all_tasks_(), timer_(), num_revealed_tasks_(0), reveal_interval_(10),
+        max_to_reveal_(5) {
 
     size_t num_of_tasks = istream.get();
     for (size_t i = 0; i < num_of_tasks; i++) {
@@ -24,7 +25,6 @@ public:
 
   bool update_task(SharedEnvironment &state) {
 
-    // - check current positions and tick off completed task.
     for (size_t i = 0; i < state.num_of_agents_; i++) {
       if (state.current_states_[i].location ==
           state.assigned_tasks_[i].front().location) {
@@ -39,7 +39,8 @@ public:
     if (timer_.elapsed_time_sec() < reveal_interval_) {
       return true;
     }
-    // - check reveal times of hidden tasks.
+
+    // - reveal next batch of tasks.
     size_t to_reveal =
         std::min(num_revealed_tasks_ + max_to_reveal_, all_tasks_.size());
     for (; num_revealed_tasks_ < to_reveal; num_revealed_tasks_++) {
@@ -55,7 +56,7 @@ private:
   Timer timer_;
   size_t num_revealed_tasks_;
   double reveal_interval_;
-  size_t max_to_reveal_ = 5;
+  size_t max_to_reveal_;
 
   bool tasks_remaining(SharedEnvironment &state) {
 
