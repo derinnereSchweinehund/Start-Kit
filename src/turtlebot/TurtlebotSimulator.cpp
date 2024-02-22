@@ -25,12 +25,12 @@ TurtlebotSimulator::validate_safe(const vector<Action> &next_actions) {
 vector<Status>
 TurtlebotSimulator::simulate_action(vector<Action> &next_actions) {
   if (!validate_safe(next_actions)) {
-    return vector<Status>(env->num_of_agents, Status::FAILED);
+    return vector<Status>(env->num_of_agents_, Status::FAILED);
   }
 
 
 
-  vector<State> next_states = model.result_states(env->curr_states, next_actions);
+  vector<State> next_states = model.result_states(env->current_states_, next_actions);
 
   http::response<http::dynamic_body> res = send_next_states(next_states);
 
@@ -41,7 +41,7 @@ TurtlebotSimulator::simulate_action(vector<Action> &next_actions) {
 
   vector<State> curr_states = parseStates(agent_results["locations"], env->curr_timestep);
   vector<Status> curr_status = parseStatus(agent_results["status"]);
-  env->curr_states = curr_states;
+  env->current_states_ = curr_states;
   env->curr_status = curr_status;
   return curr_status;
 }
