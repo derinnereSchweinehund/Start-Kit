@@ -1,0 +1,27 @@
+name: C/C++ CI
+
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install boost
+      run: |
+        sudo apt-get -y update
+        sudo apt-get -y install build-essential libboost-all-dev
+    - name: Build Release
+      run: |
+          cmake -B build ./ -DCMAKE_BUILD_TYPE=RELEASE
+          make -C build -j
+    - name: Build Debug
+      run: |
+        cmake -B build ./ -DCMAKE_BUILD_TYPE=DEBUG
+        make -C build -j

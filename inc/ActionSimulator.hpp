@@ -1,6 +1,7 @@
 #include "ActionModel.h"
 #include "SharedEnv.h"
 #include "Status.hpp"
+#include <boost/asio/io_service.hpp>
 #include <random>
 
 template <class ActionModel> class ActionSimulator {
