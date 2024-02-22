@@ -1,28 +1,28 @@
 #include "ActionModel.h"
 #include "SharedEnv.h"
-#include "Status.hpp"
 #include <random>
 
 template <class ActionModel> class ActionSimulator {
 public:
-  ActionSimulator(ActionModel &model, SharedEnvironment *env)
-      : model(model), env(env){};
-  virtual vector<Status> simulate_action(vector<Action> &next_actions);
-  virtual bool validate_safe(const vector<Action> &next_actions);
+  ActionSimulator(ActionModel &model) : model(model){};
+  virtual void simulate_action(SharedEnvironment &state,
+                               const vector<Action> &next_actions);
+  virtual bool validate_safe(const SharedEnvironment &state,
+                             const vector<Action> &next_actions);
 
 protected:
   ActionModel &model;
-  SharedEnvironment *env;
+  SharedEnvironment *state;
 
   // Check for vertex and edge conflicts
   bool validate_unfailing(const vector<Action> &next_actions,
-                          const SharedEnvironment *env,
+                          const SharedEnvironment *state,
                           ActionModelWithRotate &model) {
     vector<State> next_states =
-        model.result_states(env->curr_states, next_actions);
+        model.result_states(state->current_states_, next_actions);
     // Check vertex conflicts
-    for (int i = 0; i < env->num_of_agents; i++) {
-      for (int j = i + 1; j < env->num_of_agents; j++) {
+    for (int i = 0; i < state->num_of_agents_; i++) {
+      for (int j = i + 1; j < state->num_of_agents_; j++) {
         if (next_states.at(i).location == next_states.at(j).location) {
           return false;
         }
@@ -30,10 +30,12 @@ protected:
     }
     // Check for edge conflicts
     // If current and next state coincide in direction
-    for (int i = 0; i < env->num_of_agents; i++) {
-      for (int j = 0; j < env->num_of_agents; i++) {
-        if (next_states.at(i).location == env->curr_states.at(j).location &&
-            next_states.at(j).location == env->curr_states.at(i).location) {
+    for (int i = 0; i < state->num_of_agents_; i++) {
+      for (int j = 0; j < state->num_of_agents_; i++) {
+        if (next_states.at(i).location ==
+                state->current_states_.at(j).location &&
+            next_states.at(j).location ==
+                state->current_states_.at(i).location) {
           return false;
         }
       }
@@ -42,21 +44,22 @@ protected:
   }
 
   bool validate_failing(const vector<Action> &next_actions,
-                        const SharedEnvironment *env,
+                        const SharedEnvironment *state,
                         ActionModelWithRotate &model) {
     // Check for vertex and edge conflicts
-    assert(next_actions.size() == env->num_of_agents);
-    if (!validate_unfailing(next_actions, env, model)) {
+    assert(next_actions.size() == state->num_of_agents_);
+    if (!validate_unfailing(next_actions, state, model)) {
       return false;
     }
     // Check for 1-robustness
     unordered_set<int> occupied_before;
-    const vector<State> &curr_states = env->curr_states;
-    for (int i = 0; i < env->num_of_agents; i++) {
-      occupied_before.insert({curr_states[i].location});
+    const vector<State> &current_states_ = state->current_states_;
+    for (int i = 0; i < state->num_of_agents_; i++) {
+      occupied_before.insert({current_states_[i].location});
     }
-    vector<State> next_states = model.result_states(curr_states, next_actions);
-    for (int i = 0; i < env->num_of_agents; i++) {
+    vector<State> next_states =
+        model.result_states(current_states_, next_actions);
+    for (int i = 0; i < state->num_of_agents_; i++) {
       auto res = occupied_before.find(next_states[i].location);
       if (res != occupied_before.end()) {
         return false;
@@ -65,33 +68,35 @@ protected:
 
     return true;
   }
-
 };
 
 // Classical MAPF scenario where all actions succeed
-// I wanted to write a template <class T> to do ActionSimulator<T>  
+// I wanted to write a template <class T> to do ActionSimulator<T>
 class PerfectSimulator : ActionSimulator<ActionModelWithRotate> {
 public:
-  PerfectSimulator(ActionModelWithRotate &model, SharedEnvironment *env)
-      : ActionSimulator(model, env){};
+  PerfectSimulator(ActionModelWithRotate &model, SharedEnvironment *state)
+      : ActionSimulator(model){};
 
-  vector<Status> simulate_action(vector<Action> &next_actions) override;
+  void simulate_action(SharedEnvironment &state,
+                       const vector<Action> &next_actions) override;
 
-  bool validate_safe(const vector<Action> &next_actions) override;
-
+  bool validate_safe(const SharedEnvironment &state,
+                     const vector<Action> &next_actions) override;
 };
 
 // Implements delay probability for MAPF-DP
 class ProbabilisticSimulator : ActionSimulator<ActionModelWithRotate> {
 public:
   ProbabilisticSimulator(float success_chance, ActionModelWithRotate &model,
-                         SharedEnvironment *env)
+                         SharedEnvironment *state)
       : success_chance_(success_chance), rd_(), gen_(rd_()), distrib_(0, 1),
-        ActionSimulator(model, env){};
+        ActionSimulator(model){};
 
-  vector<Status> simulate_action(vector<Action> &next_actions) override;
+  void simulate_action(SharedEnvironment &state,
+                       const vector<Action> &next_actions) override;
 
-  virtual bool validate_safe(const vector<Action> &next_actions) override;
+  virtual bool validate_safe(const SharedEnvironment &state,
+                             const vector<Action> &next_actions) override;
 
 private:
   float success_chance_;
@@ -101,9 +106,9 @@ private:
 };
 
 bool validate_unfailing(const vector<Action> &next_actions,
-                        const SharedEnvironment *env,
+                        const SharedEnvironment *state,
                         ActionModelWithRotate &model);
 
 bool validate_failing(const vector<Action> &next_actions,
-                      const SharedEnvironment *env,
+                      const SharedEnvironment *state,
                       ActionModelWithRotate &model);

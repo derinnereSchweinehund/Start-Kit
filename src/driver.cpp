@@ -10,6 +10,7 @@
 #include <boost/program_options.hpp>
 #include <boost/tokenizer.hpp>
 #include <climits>
+#include <fstream>
 #include <memory>
 #include <signal.h>
 
@@ -88,7 +89,7 @@ int main(int argc, char **argv) {
   int preprocess_time_limit = vm["preprocessTimeLimit"].as<int>();
 
   boost::filesystem::path dir = p.parent_path();
-  std::string base_folder = dir.string();
+  base_folder = dir.string();
   if (base_folder.size() > 0 && base_folder.back() != '/') {
     base_folder += "/";
   }
@@ -113,30 +114,19 @@ int main(int argc, char **argv) {
       base_folder + read_param_json<std::string>(data, "taskFile");
 
   std::vector<int> agents = read_int_vec(agent_file, team_size);
-  std::vector<int> tasks = read_int_vec(task_file);
-  if (agents.size() > tasks.size()) {
-    logger.log_warning(
-        "Not enough tasks for robots (number of tasks < team size)");
-  }
+
+  // Load tasks
+  std::ifstream task_file_stream(task_file.c_str());
+  task_generator::TaskGenerator task_generator(task_file_stream);
+  task_file_stream.close();
 
   // Build and Assemble the system
-  SharedEnvironment env(team_size);
+  SharedEnvironment initial_state(team_size);
   Grid grid(base_folder + map_path);
-
-  ActionModelWithRotate model = ActionModelWithRotate(grid);
-  PerfectSimulator simulator(model, &env);
-
-  task_generator::TaskGenerator task_generator(tasks);
+  ActionModelWithRotate model(grid);
+  PerfectSimulator simulator(model);
   task_assigner::TaskAssigner task_assigner;
-
-#ifdef PYTHON
-#if PYTHON
-// TODO: create a template for the python execution policy and planner
-// planner = new pyMAPFPlanner();
-#else
   planner::MAPFPlanner planner(&grid);
-#endif
-#endif
   planner::MAPFPlannerWrapper wrapped_planner(&planner, &logger);
   execution_policy::MAPFExecutionPolicy execution_policy(&wrapped_planner);
 
@@ -148,9 +138,7 @@ int main(int argc, char **argv) {
                   &wrapped_planner, &simulator, &logger);
 
   signal(SIGINT, sigint_handler);
-  base_system.simulate(max_simulation_time);
-  base_system.saveResults(output_file, output_screen);
 
-  // logger->log_info("running the evaluation mode");
-  // planner = new DummyPlanner(vm["output"].as<std::string>());
+  base_system.simulate(initial_state, max_simulation_time);
+  base_system.save_results(output_file, output_screen);
 }
