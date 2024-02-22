@@ -1,8 +1,31 @@
+#ifndef TASK_ASSIGNER_H
+#define TASK_ASSIGNER_H
 
-template <class T> class TaskAssignmentSystem {
+#include "SharedEnv.h"
+#include "Tasks.h"
+
+namespace task_assigner {
+
+class TaskAssigner {
+
 public:
-  TaskAssignmentSystem(T *task_assigner) : task_assigner_(task_assigner) {}
+  TaskAssigner() : agent_id_(0) {}
+
+  std::vector<deque<Task>> assign_tasks(const SharedEnvironment *const state) {
+
+    // Assign tasks to agents in a round robin fashion
+    std::vector<deque<Task>> assigned_tasks(state->num_of_agents_);
+    for (size_t task_id; task_id < state->available_tasks_.size(); task_id++) {
+      assigned_tasks[agent_id_].push_back(state->available_tasks_[task_id]);
+      agent_id_ = (agent_id_++) % state->num_of_agents_;
+    }
+    return assigned_tasks;
+  }
 
 private:
-  T *task_assigner_;
+  size_t agent_id_;
 };
+
+} // namespace task_assigner
+
+#endif

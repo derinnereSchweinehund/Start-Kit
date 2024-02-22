@@ -4,18 +4,23 @@
 #include <vector>
 #include "ScheduleTable.hpp"
 
+namespace execution_policy {
+
 template <class P> class ExecutionPolicy {
 
 public:
   ExecutionPolicy(P *planner) : planner_(planner_) {}
 
-  std::vector<Action> &get_actions(const SharedEnvironment &env) {
-    return planner_->query(env.curr_states, env.goal_locations);
+  std::vector<Action> &get_actions(const SharedEnvironment &state) {
+    return planner_->query(state.current_states_, state.assigned_tasks_);
   }
 
 private:
-  const P *planner_;
+  P *const planner_;
 };
+
+typedef ExecutionPolicy<planner::MAPFPlannerWrapper> MAPFExecutionPolicy;
+} // namespace execution_policy
 
 
 // MinimumCommunicationPolicy maintains a partial ordering of path dependencies

@@ -6,13 +6,13 @@ pyMAPFPlanner::pyMAPFPlanner():MAPFPlanner(){
     auto sys=pybind11::module_::import("sys");
     py_env=new pyEnvironment(env);
     std::ifstream configFile("config.json");
-    
+
     //default
     std::cout<<"setting to default python path: ./python, ../python, ./build "<<std::endl;
     sys.attr("path").attr("append")("./python");
     sys.attr("path").attr("append")("../python");
     sys.attr("path").attr("append")("./build");
-    
+
     if(configFile){
         nlohmann::json configData;
         try{
@@ -27,7 +27,7 @@ pyMAPFPlanner::pyMAPFPlanner():MAPFPlanner(){
             std::cerr << "Error: Failed to parse config file. " << e.what() << std::endl;
         }
     }
-    
+
     std::cout<<"trying to import pyMAPFPlanner module"<<std::endl;
     auto py_mapf_planner_module=pybind11::module_::import("pyMAPFPlanner");
 
@@ -59,7 +59,7 @@ void pyMAPFPlanner::plan(int time_limit,std::vector<Action> &plan){
         plan=action_object.cast<std::vector<Action>>();
         // assert(plan.empty()==false);
         // return actions;
-    }   
+    }
     catch(pybind11::cast_error e){
         plan.clear();
         std::vector<int> tmp_action=action_object.cast<std::vector<int>>();
@@ -71,7 +71,7 @@ void pyMAPFPlanner::plan(int time_limit,std::vector<Action> &plan){
         // return actions;
     }
     // pybind11::gil_scoped_release release;
- 
+
 }
 
 

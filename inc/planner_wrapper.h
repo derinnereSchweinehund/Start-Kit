@@ -1,42 +1,73 @@
+#ifndef PLANNER_WRAPPER_H
+#define PLANNER_WRAPPER_H
+
 #include "ActionModel.h"
+#include "MAPFPlanner.h"
+#include "timer.h"
 #include <cstddef>
+#include <future>
 #include <vector>
 
-struct metrics_t {
-  size_t num_queries_;
-  double seconds_;
+namespace planner {
 
-  metrics_t() : num_queries_(0), seconds_(0) {}
+struct planner_metrics_t {
+  size_t num_queries_;
+  double planning_time_nanos_;
+
+  planner_metrics_t() : num_queries_(0), planning_time_nanos_(0) {}
 };
 
-template <class P> class PlannerWrapper {
+template <class P> class wrapper {
 public:
-  PlannerWrapper(P *planner) : planner_(planner) {}
+  wrapper(P *planner, Logger *logger)
+      : planner_(planner), metrics_(), timer_(), logger_(logger) {
+
+    query_(planner_->query);
+    result_ = query_.get_future();
+  }
 
   // Calls the planner's query method and updates the metrics
   // @param start The start states of the agents
   // @param goal The goal states of the agents
   // @return The next action for each agent
-  std::vector<Action> &query(const std::vector<size_t> &starts,
-                             const std::vector<size_t> &goals,
-                             double time_limit = 0.0) {
+  std::vector<Action> query(const std::vector<size_t> &starts,
+                            const std::vector<size_t> &goals,
+                            double time_limit = 0.0) {
 
-    // TODO: should implement a timer
     metrics_.num_queries_++;
-    auto start_time = std::chrono::steady_clock::now();
-    std::vector<Action> &actions = planner_->query(starts, goals);
-    metrics_.seconds_ +=
-        std::chrono::duration_cast<std::chrono::duration<double>>(
-            std::chrono::steady_clock::now() - start_time)
-            .count();
+    timer_.start();
 
+    std::thread task(std::move(query_), starts, goals, time_limit);
+
+    std::vector<Action> actions{};
+    if (result_.wait_for(std::chrono::duration<double>(time_limit)) ==
+        std::future_status::ready) {
+      task.join();
+      std::vector<Action> actions = result_.get();
+    } else {
+      logger_->log_info("planner timeout");
+    }
+
+    metrics_.planning_time_nanos_ += timer_.elapsed_time_nano();
     return actions;
   }
 
   // Returns the metrics of the planner
-  const metrics_t &get_metrics() const { return metrics_; }
+  const planner_metrics_t &get_metrics() const { return metrics_; }
 
 private:
-  P *planner_;
-  metrics_t metrics_;
+  P *const planner_;
+  planner_metrics_t metrics_;
+  Timer timer_;
+  Logger *const logger_;
+
+  std::packaged_task<std::vector<Action>(const std::vector<size_t>,
+                                         const std::vector<size_t>, double)>
+      query_;
+  std::future<std::vector<Action>> result_;
 };
+
+typedef wrapper<MAPFPlanner> MAPFPlannerWrapper;
+
+} // namespace planner
+#endif // PLANNER_WRAPPER_H
