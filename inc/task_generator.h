@@ -4,6 +4,7 @@
 #include "SharedEnv.h"
 #include "Tasks.h"
 #include "timer.h"
+#include <algorithm>
 #include <cstdint>
 #include <fstream>
 
@@ -12,7 +13,7 @@ namespace task_generator {
 class TaskGenerator {
 public:
   TaskGenerator(std::ifstream &istream)
-      : all_tasks_(), timer_(), num_revealed_tasks(0), reveal_interval_(1) {
+      : all_tasks_(), timer_(), num_revealed_tasks_(0), reveal_interval_(1) {
 
     size_t num_of_tasks = istream.get();
     for (size_t i = 0; i < num_of_tasks; i++) {
@@ -21,11 +22,17 @@ public:
     }
   }
 
-  bool update_task(SharedEnvironment *state) {
+  bool update_task(SharedEnvironment &state) {
 
-    // TODO: mutate current state
     // - check current positions and tick off completed task.
-    if (tasks_completed()) {
+    for (size_t i = 0; i < state.num_of_agents_; i++) {
+      if (state.current_states_[i].location ==
+          state.assigned_tasks_[i].front().location) {
+        state.assigned_tasks_[i].pop_front();
+      }
+    }
+
+    if (tasks_remaining(state)) {
       return false;
     }
 
@@ -33,9 +40,10 @@ public:
       return true;
     }
     // - check reveal times of hidden tasks.
-    for (size_t i = num_revealed_tasks; i < all_tasks_.size();
-         i++, num_revealed_tasks++) {
-      state->available_tasks_.push_back(all_tasks_[i]);
+    size_t to_reveal =
+        std::min(num_revealed_tasks_ + max_to_reveal_, all_tasks_.size());
+    for (; num_revealed_tasks_ < to_reveal; num_revealed_tasks_++) {
+      state.available_tasks_.push_back(all_tasks_[num_revealed_tasks_]);
     }
 
     timer_.start();
@@ -45,10 +53,24 @@ public:
 private:
   std::vector<tasks::Task> all_tasks_;
   Timer timer_;
-  size_t num_revealed_tasks;
+  size_t num_revealed_tasks_;
   double reveal_interval_;
+  size_t max_to_reveal_ = 5;
 
-  bool tasks_completed() { return false; }
+  bool tasks_remaining(SharedEnvironment &state) {
+
+    if (state.available_tasks_.empty()) {
+      return true;
+    }
+
+    for (size_t i = 0; i < state.num_of_agents_; i++) {
+      if (!state.assigned_tasks_[i].empty()) {
+        return true;
+      }
+    }
+
+    return num_revealed_tasks_ < all_tasks_.size();
+  }
 };
 } // namespace task_generator
 
