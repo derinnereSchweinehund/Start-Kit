@@ -9,9 +9,8 @@ struct metrics_t {
   std::vector<vector<Action>> planner_movements;
   std::vector<Path> paths;
   std::vector<size_t> solution_costs;
-  size_t num_of_task_finish;
 
-  metrics_t() : num_of_task_finish(0) {}
+  metrics_t()  {}
 };
 
 template <class Task_Generator, class Task_Assigner, class Execution_Policy,
@@ -25,7 +24,7 @@ public:
         execution_policy_(execution_policy), planner_(planner),
         simulator_(simulator), logger_(logger) {}
 
-  void simulate(SharedEnvironment &state, int simulation_time);
+  void simulate(SharedEnvironment *state, int simulation_time);
 
   const metrics_t &get_metrics() const { return metrics_; }
 

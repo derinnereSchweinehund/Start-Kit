@@ -2,13 +2,15 @@
 #define TASK_GENERATOR_H
 
 #include "SharedEnv.h"
-#include "Tasks.h"
 #include "timer.h"
-#include <algorithm>
-#include <cstdint>
+#include <cstddef>
 #include <fstream>
 
 namespace task_generator {
+
+struct task_generator_metrics_t {
+  size_t num_of_task_finish;
+};
 
 class TaskGenerator {
 public:
@@ -23,6 +25,8 @@ public:
     }
   }
 
+  // - update the task generator state
+  // - return true if the task generator has no more tasks to reveal
   bool update_task(SharedEnvironment &state) {
 
     for (size_t i = 0; i < state.num_of_agents_; i++) {
@@ -51,12 +55,15 @@ public:
     return true;
   }
 
+  const task_generator_metrics_t &get_metrics() { return metrics_; }
+
 private:
   std::vector<tasks::Task> all_tasks_;
-  Timer timer_;
   size_t num_revealed_tasks_;
   double reveal_interval_;
   size_t max_to_reveal_;
+  task_generator_metrics_t metrics_;
+  Timer timer_;
 
   bool tasks_remaining(SharedEnvironment &state) {
 

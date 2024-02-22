@@ -26,22 +26,24 @@ using json = nlohmann::json;
 
 po::variables_map vm;
 
-void sigint_handler(int a) {
-  fprintf(stdout, "stop the simulation...\n");
-  if (!vm["evaluationMode"].as<bool>()) {
-    base_system.saveResults(vm["output"].as<std::string>(),
-                            vm["outputScreen"].as<int>());
-  }
-  _exit(0);
-}
+// void sigint_handler(int a) {
+// fprintf(stdout, "stop the simulation...\n");
+// if (!vm["evaluationMode"].as<bool>()) {
+// system.saveResults(vm["output"].as<std::string>(),
+// vm["outputScreen"].as<int>());
+//}
+//_exit(0);
+//}
 
 int main(int argc, char **argv) {
-#ifdef PYTHON
-  // st::cout<<"Using Python="<<PYTHON<<std::endl;
-#if PYTHON
-  pybind11::initialize_interpreter();
-#endif
-#endif
+
+  // #ifdef PYTHON
+  //// std::cout<<"Using Python="<<PYTHON<<std::endl;
+  // #if PYTHON
+  // pybind11::initialize_interpreter();
+  // #endif
+  // #endif
+
   // Declare the supported options.
   po::options_description desc("Allowed options");
   desc.add_options()("help", "produce help message")
@@ -66,6 +68,7 @@ int main(int argc, char **argv) {
           "the time limit for preprocessing in seconds")(
           "logFile,l", po::value<std::string>()->default_value(""),
           "issue log file name");
+
   clock_t start_time = clock();
 
   po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -105,7 +108,7 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  std::string map_path = read_param_json<std::string>(data, "mapFile");
+  std::string map_file = read_param_json<std::string>(data, "mapFile");
   int team_size = read_param_json<int>(data, "teamSize");
   int num_task_real = read_param_json<int>(data, "numTasksReveal", 1);
   std::string agent_file =
@@ -121,8 +124,8 @@ int main(int argc, char **argv) {
   task_file_stream.close();
 
   // Build and Assemble the system
-  SharedEnvironment initial_state(team_size);
-  Grid grid(base_folder + map_path);
+  SharedEnvironment state(team_size);
+  Grid grid(map_file);
   ActionModelWithRotate model(grid);
   PerfectSimulator simulator(model);
   task_assigner::TaskAssigner task_assigner;
@@ -134,11 +137,18 @@ int main(int argc, char **argv) {
                           task_assigner::TaskAssigner,
                           execution_policy::MAPFExecutionPolicy,
                           planner::MAPFPlannerWrapper, PerfectSimulator>
-      base_system(&task_generator, &task_assigner, &execution_policy,
-                  &wrapped_planner, &simulator, &logger);
+      system(&task_generator, &task_assigner, &execution_policy,
+             &wrapped_planner, &simulator, &logger);
 
-  signal(SIGINT, sigint_handler);
+  //signal(SIGINT, sigint_handler);
 
-  base_system.simulate(initial_state, max_simulation_time);
-  base_system.save_results(output_file, output_screen);
+  system.simulate(&state, max_simulation_time);
+
+  // collect metrics from each of the components of the competition system.
+  base_system::metrics_t system_metrics = system.get_metrics();
+  planner::planner_metrics_t planner_metrics = wrapped_planner.get_metrics();
+  task_generator::task_generator_metrics_t task_generator_metrics =
+      task_generator.get_metrics();
+
+  // system.save_results(output_file, output_screen);
 }

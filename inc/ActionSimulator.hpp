@@ -74,8 +74,7 @@ protected:
 // I wanted to write a template <class T> to do ActionSimulator<T>
 class PerfectSimulator : ActionSimulator<ActionModelWithRotate> {
 public:
-  PerfectSimulator(ActionModelWithRotate &model, SharedEnvironment *state)
-      : ActionSimulator(model){};
+  PerfectSimulator(ActionModelWithRotate &model) : ActionSimulator(model){};
 
   void simulate_action(SharedEnvironment &state,
                        const vector<Action> &next_actions) override;
@@ -87,8 +86,7 @@ public:
 // Implements delay probability for MAPF-DP
 class ProbabilisticSimulator : ActionSimulator<ActionModelWithRotate> {
 public:
-  ProbabilisticSimulator(float success_chance, ActionModelWithRotate &model,
-                         SharedEnvironment *state)
+  ProbabilisticSimulator(float success_chance, ActionModelWithRotate &model)
       : success_chance_(success_chance), rd_(), gen_(rd_()), distrib_(0, 1),
         ActionSimulator(model){};
 
