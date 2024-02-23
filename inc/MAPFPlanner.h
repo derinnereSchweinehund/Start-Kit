@@ -34,7 +34,11 @@ public:
 
   bool traffic_control = false;
 
-  virtual void initialize(int preprocess_time_limit);
+  virtual void initialize(const SharedEnvironment *initial_state,
+                          double preprocess_time_limit);
+
+  vector<Action> query(std::vector<int> start_locations,
+                       std::vector<int> goal_locations, double time_limit);
 
   // return next states for all agents
   virtual void plan(int time_limit, std::vector<Action> &plan);

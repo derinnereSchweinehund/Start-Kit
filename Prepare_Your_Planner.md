@@ -1,5 +1,5 @@
 # Prepare Your Planner
-To run the program, please refer to [README.md](./README.md) to download the start-kit and compile. 
+To run the program, please refer to [README.md](./README.md) to download the start-kit and compile.
 
 ## Planner Integration
 
@@ -14,26 +14,26 @@ Before you write any code, get familiar with the simulated setups:
 ### Implement your planner
 
 The starting point of your implementation is the file `src/MAPFPlanner.cpp` and `inc/MAPFPlanner.h`. See examples in `src/MAPFPlanner.cpp`
-- Implement your preprocessing in the function `MAPFPlanner::initialize()` that is provided to you. 
+- Implement your preprocessing in the function `MAPFPlanner::initialize()` that is provided to you.
 - Implement your planner in the function `MAPFPlanner::plan()` that provided to you
 - Don’t override any operating system-related functions (signal handlers)
 - Don’t interfere with the running program -- stack manipulation etc
 - Don’t modify any start kit functions and modify / call / interfere with any start kit variables or objects, including those in:
-  
+
   src/ActionModel.cpp, src/common.cpp, src/CompetitionSystem.cpp, src/driver.cpp, src/Evaluation.cpp, src/Grid.cpp,
-  src/Logger.cpp, src/States.cpp, src/Validator.cpp, inc/ActionModel.h, inc/CompetitionSystem.h, 
+  src/Logger.cpp, src/States.cpp, src/Validator.cpp, inc/ActionModel.h, inc/CompetitionSystem.h,
   Evaluation.h, Grid.h, Logger.h, SharedEnv.h, States.h, Tasks.h, Validator.h, common.h
-  
+
 Start your implementation by understanding the `SharedEnvironment` API. This data structure (defined as `env` in `inc/MAPFPlanner.h`) contains useful information about the simulated setup:
 -  num_of_robots: `int`, the total team size.
 -  rows: `int`, the number of rows of the map.
 -  cols: `int`, the number of columns of the map.
 -  map_name: `string`, the map file name.
--  map: vector of `int`, stores the map.  
+-  map: vector of `int`, stores the map.
 -  file_storage_path: `string`, used for indicating the path for file storage, refer to section 'Local Preprocessing and Large Files'.
 -  goal locations, vector of vector of `pair<int,int>`: current tasks locations allocated to each robot. The first int of a task (pair of int) is the goal location, and the second int indicates the timestep that the task was allocated.
 -  current_timestep: `int`, the current timestep according to the simulator. *Please be aware that current_timestep may increment during a `plan()` call. This occurs when a planner exceeds the time limit for a given timestep*
--  curr_states: vector of `State`, the current state for each robot at the current time step, 
+-  curr_states: vector of `State`, the current state for each robot at the current time step,
 
 ### Plan commands for your robots
 
@@ -73,7 +73,7 @@ The pybind11 module mainly contains three files:
 + `pyMAPFPlanner.py`: this file is where users implement their learning-based algorithms and return solutions as a list of actions or a numpy array.
 + `pyMAPFPlanner.cpp`: this file imports the above Python script and calls relevant Python functions to get the solution and return it to the C++ simulation system
 
-To use the python interface, one can use the following to compile the program that runs pyMAPFPlanner 
+To use the python interface, one can use the following to compile the program that runs pyMAPFPlanner
 
 ```shell
 mkdir build
@@ -111,7 +111,7 @@ The evaluation system builds and execuates your implementation in a docker conta
 To make sure your implementation builds and runs as expected, you can build the docker container locally.
 
 First, install the latest Docker release on your machine, [https://docs.docker.com/engine/install/](https://docs.docker.com/engine/install/).
-Next, build your container using our provided `RunInDocker.sh` script. 
+Next, build your container using our provided `RunInDocker.sh` script.
 In the remainder of this section, we explain how the script works and how to use your docker container.
 
 #### Using `RunInDocker.sh`
@@ -132,16 +132,16 @@ In the remainder of this section, we explain how the script works and how to use
 
 #### Execute Commands Outside the Container
 If the docker container is started in the background, you can run commands from the outside of the docker container (treat the docker container as executable).
- 
+
   * Use prefix: `docker container exec <container name> `for any command you want to execute, for example:
   ```shell
   docker container exec mapf_test ./build/lifelong --inputFile ./example_problems/random.domain/random_20.json -o test.json
-  ``` 
- 
+  ```
+
   * All outputs are stored inside the container. You could copy files from the Docker container. For example: `docker cp mapf_test:/MAPF/codes/test.json ./test.json`, which copies `test.json` to your current working directory.
 
 ## Preprocessing and Large File Storage
 
-Prior to the start of each evaluation, we allow your planner 30 minutes of preprocessing time per map to load supporting files and initialise supporting data structures. The `preprocess_time_limit` is specified as a parameter to your planner's `initialize()` function. If your planner's preprocessing operations take longer than `preprocess_time_limit`, your planner fails and the simulation terminates with **exit code 124**. 
+Prior to the start of each evaluation, we allow your planner 30 minutes of preprocessing time per map to load supporting files and initialise supporting data structures. The `preprocess_time_limit` is specified as a parameter to your planner's `initialize()` function. If your planner's preprocessing operations take longer than `preprocess_time_limit`, your planner fails and the simulation terminates with **exit code 124**.
 
 Please refer to the documentation in [Working_with_Preprocessed_Data.md](./Working_with_Preprocessed_Data.md) for more details.

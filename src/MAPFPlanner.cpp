@@ -1,3 +1,4 @@
+#include "SharedEnv.h"
 #include "flow.hpp"
 #include "heuristics.hpp"
 #include "pibt.hpp"
@@ -34,18 +35,20 @@ struct cmp {
   }
 };
 
-void MAPFPlanner::initialize(int preprocess_time_limit) {
-  heuristics.resize(env->map.size());
-  assert(env->num_of_agents != 0);
-  p.resize(env->num_of_agents);
-  decision.resize(env->map.size(), -1);
-  prev_states.resize(env->num_of_agents);
-  next_states.resize(env->num_of_agents);
-  tasks.resize(env->num_of_agents);
-  decided.resize(env->num_of_agents, DCR({-1, DONE::DONE}));
-  occupied.resize(env->map.size(), false);
-  checked.resize(env->num_of_agents, false);
-  ids.resize(env->num_of_agents);
+void planner::MAPFPlanner::initialize(const SharedEnvironment *initial_state,
+                                      double preprocess_time_limit) {
+  int map_size = grid_->rows * grid_->cols;
+  heuristics.resize(map_size);
+  assert(initial_state->num_of_agents_ != 0);
+  p.resize(initial_state->num_of_agents_);
+  decision.resize(map_size, -1);
+  prev_states.resize(initial_state->num_of_agents_);
+  next_states.resize(initial_state->num_of_agents_);
+  tasks.resize(initial_state->num_of_agents_);
+  decided.resize(initial_state->num_of_agents_, DCR({-1, DONE::DONE}));
+  occupied.resize(map_size, false);
+  checked.resize(initial_state->num_of_agents_, false);
+  ids.resize(initial_state->num_of_agents_);
   for (int i = 0; i < ids.size(); i++) {
     ids.at(i) = i;
   }
@@ -57,19 +60,23 @@ void MAPFPlanner::initialize(int preprocess_time_limit) {
   p_copy = p;
 
   // if map name inlucde warehouse or sortation, then we need to build traffic
-  if (env->map_name.find("warehouse") != std::string::npos ||
-      env->map_name.find("sortation") != std::string::npos)
-    traffic_control = true;
+  //if (initial_state->map_name.find("warehouse") != std::string::npos ||
+      //initial_state->map_name.find("sortation") != std::string::npos)
+    //traffic_control = true;
 
-  if (traffic_control) {
-    build_traffic(env, traffic);
-    build_traffic_endpoint_warehouse(env, traffic);
-  } else
-    traffic.resize(env->map.size(), -1);
+  //if (traffic_control) {
+    //build_traffic(initial_state, traffic);
+    //build_traffic_endpoint_warehouse(initial_state, traffic);
+  //} else
+    //traffic.resize(initial_state->map.size(), -1);
 }
 
+vector<Action> planner::MAPFPlanner::query(std::vector<int> start_locations,
+                                           std::vector<int> goal_locations,
+                                           double time_limit){};
+
 // return next states for all agents
-void MAPFPlanner::plan(int time_limit, vector<Action> &actions) {
+void planner::MAPFPlanner::plan(int time_limit, vector<Action> &actions) {
 
   prev_decision.clear();
   prev_decision.resize(env->map.size(), -1);
@@ -78,7 +85,7 @@ void MAPFPlanner::plan(int time_limit, vector<Action> &actions) {
 
   int ch_count = 0;
 
-  for (int i = 0; i < env->num_of_agents; i++) {
+  for (int i = 0; i < env->num_of_agents_; i++) {
 
     if (ch_count < 100)
       for (int j = 0; j < env->goal_locations.at(i).size(); j++) {
@@ -130,7 +137,7 @@ void MAPFPlanner::plan(int time_limit, vector<Action> &actions) {
     }
   }
 
-  actions.resize(env->num_of_agents);
+  actions.resize(env->num_of_agents_);
   for (int id : ids) {
 
     if (next_states.at(id).location != -1)
@@ -152,7 +159,7 @@ void MAPFPlanner::plan(int time_limit, vector<Action> &actions) {
 #endif
   }
 
-  for (int id = 0; id < env->num_of_agents; id++) {
+  for (int id = 0; id < env->num_of_agents_; id++) {
     if (!checked.at(id) && actions.at(id) == Action::FW) {
       moveCheck(id, checked, decided, actions, prev_decision);
     }

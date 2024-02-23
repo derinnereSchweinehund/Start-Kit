@@ -10,6 +10,7 @@
 #include <boost/program_options.hpp>
 #include <boost/tokenizer.hpp>
 #include <climits>
+#include <fstream>
 #include <memory>
 #include <signal.h>
 
@@ -25,22 +26,24 @@ using json = nlohmann::json;
 
 po::variables_map vm;
 
-void sigint_handler(int a) {
-  fprintf(stdout, "stop the simulation...\n");
-  if (!vm["evaluationMode"].as<bool>()) {
-    base_system.saveResults(vm["output"].as<std::string>(),
-                            vm["outputScreen"].as<int>());
-  }
-  _exit(0);
-}
+// void sigint_handler(int a) {
+// fprintf(stdout, "stop the simulation...\n");
+// if (!vm["evaluationMode"].as<bool>()) {
+// system.saveResults(vm["output"].as<std::string>(),
+// vm["outputScreen"].as<int>());
+//}
+//_exit(0);
+//}
 
 int main(int argc, char **argv) {
-#ifdef PYTHON
-  // st::cout<<"Using Python="<<PYTHON<<std::endl;
-#if PYTHON
-  pybind11::initialize_interpreter();
-#endif
-#endif
+
+  // #ifdef PYTHON
+  //// std::cout<<"Using Python="<<PYTHON<<std::endl;
+  // #if PYTHON
+  // pybind11::initialize_interpreter();
+  // #endif
+  // #endif
+
   // Declare the supported options.
   po::options_description desc("Allowed options");
   desc.add_options()("help", "produce help message")
@@ -65,6 +68,7 @@ int main(int argc, char **argv) {
           "the time limit for preprocessing in seconds")(
           "logFile,l", po::value<std::string>()->default_value(""),
           "issue log file name");
+
   clock_t start_time = clock();
 
   po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -88,7 +92,7 @@ int main(int argc, char **argv) {
   int preprocess_time_limit = vm["preprocessTimeLimit"].as<int>();
 
   boost::filesystem::path dir = p.parent_path();
-  std::string base_folder = dir.string();
+  base_folder = dir.string();
   if (base_folder.size() > 0 && base_folder.back() != '/') {
     base_folder += "/";
   }
@@ -104,7 +108,7 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  std::string map_path = read_param_json<std::string>(data, "mapFile");
+  std::string map_file = read_param_json<std::string>(data, "mapFile");
   int team_size = read_param_json<int>(data, "teamSize");
   int num_task_real = read_param_json<int>(data, "numTasksReveal", 1);
   std::string agent_file =
@@ -113,30 +117,19 @@ int main(int argc, char **argv) {
       base_folder + read_param_json<std::string>(data, "taskFile");
 
   std::vector<int> agents = read_int_vec(agent_file, team_size);
-  std::vector<int> tasks = read_int_vec(task_file);
-  if (agents.size() > tasks.size()) {
-    logger.log_warning(
-        "Not enough tasks for robots (number of tasks < team size)");
-  }
+
+  // Load tasks
+  std::ifstream task_file_stream(task_file.c_str());
+  task_generator::TaskGenerator task_generator(task_file_stream);
+  task_file_stream.close();
 
   // Build and Assemble the system
-  SharedEnvironment env(team_size);
-  Grid grid(base_folder + map_path);
-
-  ActionModelWithRotate model = ActionModelWithRotate(grid);
-  PerfectSimulator simulator(model, &env);
-
-  task_generator::TaskGenerator task_generator(tasks);
+  SharedEnvironment state(team_size);
+  Grid grid(map_file);
+  ActionModelWithRotate model(grid);
+  PerfectSimulator simulator(model);
   task_assigner::TaskAssigner task_assigner;
-
-#ifdef PYTHON
-#if PYTHON
-// TODO: create a template for the python execution policy and planner
-// planner = new pyMAPFPlanner();
-#else
   planner::MAPFPlanner planner(&grid);
-#endif
-#endif
   planner::MAPFPlannerWrapper wrapped_planner(&planner, &logger);
   execution_policy::MAPFExecutionPolicy execution_policy(&wrapped_planner);
 
@@ -144,13 +137,18 @@ int main(int argc, char **argv) {
                           task_assigner::TaskAssigner,
                           execution_policy::MAPFExecutionPolicy,
                           planner::MAPFPlannerWrapper, PerfectSimulator>
-      base_system(&task_generator, &task_assigner, &execution_policy,
-                  &wrapped_planner, &simulator, &logger);
+      system(&task_generator, &task_assigner, &execution_policy,
+             &wrapped_planner, &simulator, &logger);
 
-  signal(SIGINT, sigint_handler);
-  base_system.simulate(max_simulation_time);
-  base_system.saveResults(output_file, output_screen);
+  //signal(SIGINT, sigint_handler);
 
-  // logger->log_info("running the evaluation mode");
-  // planner = new DummyPlanner(vm["output"].as<std::string>());
+  system.simulate(&state, max_simulation_time);
+
+  // collect metrics from each of the components of the competition system.
+  base_system::metrics_t system_metrics = system.get_metrics();
+  planner::planner_metrics_t planner_metrics = wrapped_planner.get_metrics();
+  task_generator::task_generator_metrics_t task_generator_metrics =
+      task_generator.get_metrics();
+
+  // system.save_results(output_file, output_screen);
 }
