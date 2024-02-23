@@ -1,10 +1,10 @@
 #include "ActionModel.h"
 #include "ActionSimulator.hpp"
 #include "FreeState.h"
+#include "Grid.h"
 #include "SharedEnv.h"
 #include "States.h"
 #include "nlohmann/json.hpp"
-#include <algorithm>
 #include <boost/asio/io_service.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
@@ -25,12 +25,14 @@ using tcp = boost::beast::net::ip::tcp;
 
 class TurtlebotSimulator : ActionSimulator<ActionModelWithRotate> {
 public:
-  TurtlebotSimulator(ActionModelWithRotate &model, SharedEnvironment *env)
-      : stream_(ioc_), resolver_(ioc_), ActionSimulator(model, env) {}
+  TurtlebotSimulator(ActionModelWithRotate &model, Grid &grid)
+      : stream_(ioc_), resolver_(ioc_), ActionSimulator(model, grid) {}
 
-  vector<Status> simulate_action(vector<Action> &next_actions) override;
+  void simulate_action(SharedEnvironment &state,
+                                 const vector<Action> &next_actions) override;
 
-  bool validate_safe(const vector<Action> &next_actions) override;
+  bool validate_safe(const SharedEnvironment &state,
+                     const vector<Action> &next_actions) override;
 
 private:
   const string hostname;
@@ -42,22 +44,22 @@ private:
   const string post_path = "/extend_path";
   const string get_path = "/get_status";
 
-  inline float location_to_x(int location) {
-    return static_cast<float>(location % env->cols);
+  inline float location_to_x(int location, const Grid &grid) {
+    return static_cast<float>(location % grid.cols);
   };
 
-  inline float location_to_y(int location) {
-    return static_cast<float>(location / env->cols);
+  inline float location_to_y(int location, const Grid &grid) {
+    return static_cast<float>(location / grid.cols);
   };
 
-  inline int xy_to_location(int x, int y) { return y * env->cols + x; }
+  inline int xy_to_location(int x, int y, int cols) { return y * cols + x; }
 
-  FreeState transform_state(const State &place) {
+  FreeState transform_state(const State &place, const Grid &grid) {
     // std::cout << place.location << " " << location_to_x(place.location) << "
     // "
     //           << location_to_y(place.location) << " " << cols_ << std::endl;
-    return FreeState{.x = location_to_x(place.location),
-                     .y = location_to_y(place.location),
+    return FreeState{.x = location_to_x(place.location, grid),
+                     .y = location_to_y(place.location, grid),
                      .theta = static_cast<float>(place.orientation * 90),
                      .timestep = place.timestep};
   }
@@ -75,12 +77,12 @@ private:
     return obj;
   }
 
-  json construct_payload(const vector<State> &next_states) {
+  json construct_payload(const vector<State> &next_states, int num_of_agents) {
     json payload = json::object();
     json plans = json::array();
 
-    for (int i = 0; i < env->num_of_agents; i++) {
-      FreeState next = transform_state(next_states.at(i));
+    for (int i = 0; i < num_of_agents; i++) {
+      FreeState next = transform_state(next_states.at(i), grid);
       plans.push_back(stateToJson(i, next));
     }
 
@@ -94,8 +96,9 @@ private:
     stream_.connect(results);
   }
 
-  template<class body>
-  void fill_request(http::request<body> req, const http::verb verb, const string path, const json payload) {
+  template <class body>
+  void fill_request(http::request<body> req, const http::verb verb,
+                    const string path, const json payload) {
     req.method(verb);
     req.target(path);
     //   req,set(http::field::content_type, "application/json");
@@ -103,8 +106,9 @@ private:
     req.prepare_payload();
   }
 
-  template<class req_body, class resp_body>
-  int send_request(http::request<req_body> request, http::response<resp_body> response) {
+  template <class req_body, class resp_body>
+  int send_request(http::request<req_body> request,
+                   http::response<resp_body> response) {
     connect_to_server();
     http::write(stream_, request);
 
@@ -113,14 +117,14 @@ private:
     beast::error_code ec;
     (void)stream_.socket().wait(boost::asio::ip::tcp::socket::wait_write, ec);
     stream_.socket().close();
- 
+
     return response.base().result_int();
   }
 
   http::response<http::dynamic_body>
   send_next_states(const vector<State> &next_states) {
 
-    json payload = construct_payload(next_states);
+    json payload = construct_payload(next_states, state->num_of_agents_);
 
     http::request<http::string_body> req;
     fill_request(req, http::verb::post, post_path, payload);
@@ -128,7 +132,7 @@ private:
     http::response<http::dynamic_body> res;
     int response_code = send_request(req, res);
 
-    if (response_code != 200) { 
+    if (response_code != 200) {
       std::cout << "Unsuccessful POST" << std::endl;
     }
     return res;
@@ -142,9 +146,10 @@ private:
 
     if (response_code != 200) {
       std::cout << "Unsuccessful GET" << std::endl;
-      //TODO: Handle failed connection
+      // TODO: Handle failed connection
     }
-    // data has 2 fields "locations" : [{x, y, theta, agent_id}], "status" : [SUCEEDED|FAILED|IN-PROGRESS]
+    // data has 2 fields "locations" : [{x, y, theta, agent_id}], "status" :
+    // [SUCEEDED|FAILED|IN-PROGRESS]
 
     return json::parse(beast::buffers_to_string(res.body().data()));
   }
@@ -154,26 +159,28 @@ private:
     int y = abs(state_json["y"].get<int>());
     int theta = state_json["theta"].get<int>();
     int agent_id = state_json["agent_id"].get<int>();
-    return State(xy_to_location(x, y), timestep,
-              ((theta + 45) / 90) % 4); // Map 0-360 to 0-3
+    return State(xy_to_location(x, y, grid.cols), timestep,
+                 ((theta + 45) / 90) % 4); // Map 0-360 to 0-3
   }
 
-  vector<State> parseStates(json::array_t json_states, int timestep) {
-    vector<State> curr_states(env->num_of_agents);
+  vector<State> parseStates(json::array_t json_states, int timestep, int num_of_agents) {
+    vector<State> curr_states(num_of_agents);
     for (int i = 0; i < json_states.size(); i++) {
       json agent_state = json_states[i];
-      curr_states.at(agent_state["agent_id"]) = jsonToState(agent_state, timestep);
-      }
-    // Guarantee that every agent is initiliased???
+      curr_states.at(agent_state["agent_id"]) =
+          jsonToState(agent_state, timestep);
+    }
+    // Guarantee that every agent is given an update???
     return curr_states;
   }
 
-  vector<Status> parseStatus(json::array_t json_status){
-    vector<Status> curr_status(env->num_of_agents, Status::UNKNOWN);
+  vector<Status> parseStatus(json::array_t json_status, int num_of_agents) {
+    vector<Status> curr_status(num_of_agents, Status::UNKNOWN);
     for (int i = 0; i < json_status.size(); i++) {
       json agent_status = curr_status[i];
       string status_str = agent_status["status"].get<string>();
-      for (auto & c: status_str) c = std::toupper((unsigned char)c);
+      for (auto &c : status_str)
+        c = std::toupper((unsigned char)c);
       if (status_str == "EXECUTING") {
         curr_status.at(agent_status["agent_id"].get<int>()) = Status::EXECUTING;
       } else if (status_str == "FAILED") {
@@ -187,5 +194,4 @@ private:
 
     return curr_status;
   }
-
 };

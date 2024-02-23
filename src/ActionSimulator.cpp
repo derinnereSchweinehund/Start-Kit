@@ -9,12 +9,14 @@ void PerfectSimulator::simulate_action(SharedEnvironment &state,
     for (size_t i = 0; i < state.num_of_agents_; i++) {
       state.current_status_[i] = Status::FAILED;
     }
+    return;
   }
   state.current_states_ =
       model.result_states(state.current_states_, next_actions);
   for (size_t i = 0; i < state.num_of_agents_; i++) {
     state.current_status_[i] = Status::SUCCEEDED;
   }
+  return;
 }
 
 bool PerfectSimulator::validate_safe(const SharedEnvironment &state,
@@ -33,6 +35,7 @@ void ProbabilisticSimulator::simulate_action(
     for (size_t i = 0; i < state.num_of_agents_; i++) {
       state.current_status_[i] = Status::FAILED;
     }
+    return;
   }
 
   vector<Status> progress(state.num_of_agents_);
@@ -46,4 +49,5 @@ void ProbabilisticSimulator::simulate_action(
       state.current_status_[i] = Status::FAILED;
     }
   }
+  return;
 }
