@@ -7,8 +7,8 @@ class Grid
 public:
     Grid(string fname);
 
-    int rows = 0;
-    int cols = 0;
+    int rows;
+    int cols;
     std::vector<int> map;
     string map_name;
 

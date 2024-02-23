@@ -1,27 +1,5 @@
 #include "CompetitionSystem.h"
 
-using json = nlohmann::ordered_json;
-
-namespace base_system {
-
-template <class Task_Generator, class Task_Assigner, class Execution_Policy,
-          class Planner, class Simulator>
-void BaseSystem<Task_Generator, Task_Assigner, Execution_Policy, Planner,
-                Simulator>::simulate(SharedEnvironment *const state,
-                                     int simulation_time) {
-
-  // immutable state pointer for those pesky user defined functions
-  const SharedEnvironment *const immutable_state = state;
-
-  while (task_generator_->update_tasks(state)) {
-    task_assigner_->assign_tasks(immutable_state);
-
-    std::vector<Action> next_actions =
-        execution_policy_->get_actions(immutable_state);
-    simulator_->simulate_actions(state, next_actions);
-  }
-}
-
 // template <class Task_Generator, class Task_Assigner, class Execution_Policy,
 // class Planner, class Simulator>
 // void BaseSystem<Task_Generator, Task_Assigner, Execution_Policy, Planner,
@@ -31,9 +9,8 @@ void BaseSystem<Task_Generator, Task_Assigner, Execution_Policy, Planner,
 // output.open(fileName, std::ios::out);
 // for (int i = 0; i < state_.num_of_agents_; i++) {
 // output << "Agent " << i << ": ";
-// if (option == 0) {
 // bool first = true;
-// for (const auto t : metrics_.actual_movements[i]) {
+// for (const auto t : metrics_.actual_movements[]) {
 // if (!first) {
 // output << ",";
 //} else {
@@ -237,4 +214,3 @@ void BaseSystem<Task_Generator, Task_Assigner, Execution_Policy, Planner,
 // f << std::setw(4) << js;
 //}
 
-} // namespace base_system

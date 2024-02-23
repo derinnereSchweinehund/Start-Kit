@@ -10,7 +10,7 @@ struct metrics_t {
   std::vector<Path> paths;
   std::vector<size_t> solution_costs;
 
-  metrics_t()  {}
+  metrics_t() {}
 };
 
 template <class Task_Generator, class Task_Assigner, class Execution_Policy,
@@ -24,7 +24,19 @@ public:
         execution_policy_(execution_policy), planner_(planner),
         simulator_(simulator), logger_(logger) {}
 
-  void simulate(SharedEnvironment *state, int simulation_time);
+  void simulate(SharedEnvironment *const state, int simulation_time) {
+
+    // immutable state pointer for those pesky user defined functions
+    const SharedEnvironment *const immutable_state = state;
+
+    while (task_generator_->update_tasks(state)) {
+      task_assigner_->assign_tasks(immutable_state);
+
+      std::vector<Action> next_actions =
+          execution_policy_->get_actions(immutable_state);
+      simulator_->simulate_action(state, next_actions);
+    }
+  }
 
   const metrics_t &get_metrics() const { return metrics_; }
 

@@ -29,16 +29,16 @@ public:
 
   // - update the task generator state
   // - return true if the task generator has no more tasks to reveal
-  bool update_task(SharedEnvironment &state) {
+  bool update_tasks(SharedEnvironment * state) {
 
-    for (size_t i = 0; i < state.num_of_agents_; i++) {
-      if (state.current_states_[i].location ==
-          state.assigned_tasks_[i].front().location) {
-        state.assigned_tasks_[i].pop_front();
+    for (size_t i = 0; i < state->num_of_agents_; i++) {
+      if (state->current_states_[i].location ==
+          state->assigned_tasks_[i].front().location) {
+        state->assigned_tasks_[i].pop_front();
       }
     }
 
-    if (tasks_remaining(state)) {
+    if (!tasks_remaining(state)) {
       return false;
     }
 
@@ -50,7 +50,7 @@ public:
     size_t to_reveal =
         std::min(num_revealed_tasks_ + max_to_reveal_, all_tasks_.size());
     for (; num_revealed_tasks_ < to_reveal; num_revealed_tasks_++) {
-      state.available_tasks_.push_back(all_tasks_[num_revealed_tasks_]);
+      state->available_tasks_.push_back(all_tasks_[num_revealed_tasks_]);
     }
 
     timer_.start();
@@ -67,14 +67,14 @@ private:
   task_generator_metrics_t metrics_;
   Timer timer_;
 
-  bool tasks_remaining(SharedEnvironment &state) {
+  bool tasks_remaining(SharedEnvironment *state) {
 
-    if (state.available_tasks_.empty()) {
+    if (state->available_tasks_.empty()) {
       return true;
     }
 
-    for (size_t i = 0; i < state.num_of_agents_; i++) {
-      if (!state.assigned_tasks_[i].empty()) {
+    for (size_t i = 0; i < state->num_of_agents_; i++) {
+      if (!state->assigned_tasks_[i].empty()) {
         return true;
       }
     }

@@ -11,7 +11,7 @@ class MAPFPlanner {
 public:
   const Grid *const grid_;
 
-  MAPFPlanner(Grid *const grid) : grid_(grid){};
+  MAPFPlanner(const Grid *const grid) : grid_(grid){};
   ~MAPFPlanner() {}
 
   std::vector<HeuristicTable> heuristics;
@@ -39,9 +39,6 @@ public:
 
   vector<Action> query(std::vector<int> start_locations,
                        std::vector<int> goal_locations, double time_limit);
-
-  // return next states for all agents
-  virtual void plan(int time_limit, std::vector<Action> &plan);
 
   // Start kit dummy implementation
   std::list<pair<int, int>>

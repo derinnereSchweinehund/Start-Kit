@@ -11,8 +11,18 @@ template <class P> class ExecutionPolicy {
 public:
   ExecutionPolicy(P *planner) : planner_(planner) {}
 
-  std::vector<Action> &get_actions(const SharedEnvironment *state) {
-    return planner_->query(state->current_states_, state->assigned_tasks_, 3.0);
+  std::vector<Action> get_actions(const SharedEnvironment *state) {
+
+    std::vector<int> start_locations(state->num_of_agents_);
+    std::vector<int> goal_locations(state->num_of_agents_);
+
+    for (size_t i = 0; i < state->num_of_agents_; i++) {
+      start_locations[i] = state->current_states_[i].location;
+      goal_locations[i] = state->assigned_tasks_[i].front().location;
+    }
+
+    return planner_->query(start_locations, goal_locations, 3.0);
+
   }
 
 private:

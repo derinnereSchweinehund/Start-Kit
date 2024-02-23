@@ -29,10 +29,10 @@ bool ActionModelWithRotate::is_valid(const vector<State>& prev, const vector<Act
     unordered_map<int, int> vertex_occupied;
     unordered_map<pair<int, int>, int> edge_occupied;
 
-    for (int i = 0; i < prev.size(); i ++) 
+    for (int i = 0; i < prev.size(); i ++)
     {
-        
-        if (next[i].location < 0 || next[i].location >= grid.map.size() || 
+
+        if (next[i].location < 0 || next[i].location >= grid.map.size() ||
             (abs(next[i].location / cols - prev[i].location/cols) + abs(next[i].location % cols - prev[i].location %cols) > 1 ))
         {
             errors.push_back(make_tuple("unallowed move",i,-1,next[i].timestep));
@@ -42,7 +42,7 @@ bool ActionModelWithRotate::is_valid(const vector<State>& prev, const vector<Act
             errors.push_back(make_tuple("unallowed move",i,-1,next[i].timestep));
             return false;
         }
-        
+
 
         if (vertex_occupied.find(next[i].location) != vertex_occupied.end()) {
             errors.push_back(make_tuple("vertex conflict",i,vertex_occupied[next[i].location], next[i].timestep));
@@ -55,7 +55,7 @@ bool ActionModelWithRotate::is_valid(const vector<State>& prev, const vector<Act
             errors.push_back(make_tuple("edge conflict", i, edge_occupied[{prev[i].location, next[i].location}], next[i].timestep));
             return false;
         }
-        
+
 
         vertex_occupied[next[i].location] = i;
         int r_edge_idx = (next[i].location + 1) * rows * cols +  prev[i].location;

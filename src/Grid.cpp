@@ -20,7 +20,7 @@ Grid::Grid(string fname)
 
     if (line[0] == 't')
     {
-        // Benchmark 
+        // Benchmark
         boost::char_separator<char> sep(" ");
         getline(myfile, line);
         boost::tokenizer<boost::char_separator<char>> tok(line, sep);

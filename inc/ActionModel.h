@@ -50,7 +50,7 @@ public:
             else if (action == Action::CR)
             {
                 new_orientation = (prev.orientation + 1) % 4;
-      
+
             }
             else if (action == Action::CCR)
             {
@@ -67,5 +67,5 @@ protected:
     int rows;
     int cols;
     int moves[4];
-    Logger* logger = nullptr;    
+    Logger* logger = nullptr;
 };

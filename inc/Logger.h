@@ -12,7 +12,6 @@ namespace logging = boost::log;
 namespace keywords = boost::log::keywords;
 
 
-
 class Logger
 {
 public:

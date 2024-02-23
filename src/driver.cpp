@@ -81,8 +81,8 @@ int main(int argc, char **argv) {
   po::notify(vm);
 
   std::string log_file = vm["logFile"].as<std::string>();
-  Logger logger = Logger(log_file);
-  std::string base_folder = vm["inputFolder"].as<std::string>();
+  Logger logger(log_file);
+  // std::string base_folder = vm["inputFolder"].as<std::string>();
   boost::filesystem::path p(vm["inputFile"].as<std::string>());
   std::string output_file = vm["output"].as<std::string>();
   int output_screen = vm["outputScreen"].as<int>();
@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
   int preprocess_time_limit = vm["preprocessTimeLimit"].as<int>();
 
   boost::filesystem::path dir = p.parent_path();
-  base_folder = dir.string();
+  std::string base_folder = dir.string();
   if (base_folder.size() > 0 && base_folder.back() != '/') {
     base_folder += "/";
   }
@@ -123,27 +123,27 @@ int main(int argc, char **argv) {
   task_assigner::TaskAssigner task_assigner;
 
   SharedEnvironment state(team_size);
-  Grid grid(map_file);
+  Grid grid(base_folder + map_file);
   ActionModelWithRotate model(grid);
-  PerfectSimulator simulator(model);
+  PerfectSimulator<ActionModelWithRotate> simulator(model);
 
   planner::MAPFPlanner planner(&grid);
   planner::MAPFPlannerWrapper wrapped_planner(&planner, &logger);
   execution_policy::MAPFExecutionPolicy execution_policy(&wrapped_planner);
 
-  base_system::BaseSystem<task_generator::TaskGenerator,
-                          task_assigner::TaskAssigner,
-                          execution_policy::MAPFExecutionPolicy,
-                          planner::MAPFPlannerWrapper, PerfectSimulator>
-      system(&task_generator, &task_assigner, &execution_policy,
-             &wrapped_planner, &simulator, &logger);
+  base_system::BaseSystem<
+      task_generator::TaskGenerator, task_assigner::TaskAssigner,
+      execution_policy::MAPFExecutionPolicy, planner::MAPFPlannerWrapper,
+      PerfectSimulator<ActionModelWithRotate>>
+      competition_system(&task_generator, &task_assigner, &execution_policy,
+                         &wrapped_planner, &simulator, &logger);
 
   // signal(SIGINT, sigint_handler);
 
-  system.simulate(&state, max_simulation_time);
+  competition_system.simulate(&state, max_simulation_time);
 
   // collect metrics from each of the components of the competition system.
-  base_system::metrics_t system_metrics = system.get_metrics();
+  base_system::metrics_t system_metrics = competition_system.get_metrics();
   planner::planner_metrics_t planner_metrics = wrapped_planner.get_metrics();
   task_generator::task_generator_metrics_t task_generator_metrics =
       task_generator.get_metrics();
