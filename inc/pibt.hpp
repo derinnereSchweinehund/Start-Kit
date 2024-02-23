@@ -1,6 +1,7 @@
 #ifndef pibt_hpp
 #define pibt_hpp
 
+#pragma once
 #include <string>
 #include <vector>
 #include <list>

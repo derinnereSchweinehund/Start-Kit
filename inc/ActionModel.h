@@ -21,10 +21,10 @@ public:
     list<std::tuple<std::string,int,int,int>> errors;
 
     ActionModelWithRotate(Grid & grid): grid(grid), rows(grid.rows), cols(grid.cols){
-        moves[0] = 1;
-        moves[1] = cols;
-        moves[2] = -1;
-        moves[3] = -cols;
+        moves[0] = 1;       // Right, increase column
+        moves[1] = cols;    // Down,  increase row
+        moves[2] = -1;      // Left,  decrease column
+        moves[3] = -cols;   // Up,    decrease row
 
     };
 

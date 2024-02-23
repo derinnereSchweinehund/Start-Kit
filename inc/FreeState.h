@@ -1,4 +1,5 @@
-
+#ifndef FREESTATE_H
+#define FREESTATE_H
 struct FreeState
 {
     float x;
@@ -6,3 +7,4 @@ struct FreeState
     float theta;
     int timestep;
 };
+#endif

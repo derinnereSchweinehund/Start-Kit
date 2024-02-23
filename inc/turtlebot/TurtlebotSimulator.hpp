@@ -1,3 +1,4 @@
+#pragma once
 #include "ActionModel.h"
 #include "ActionSimulator.hpp"
 #include "FreeState.h"
@@ -17,6 +18,7 @@
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
 #include <sys/socket.h>
+#include <unistd.h>
 
 namespace beast = boost::beast;
 namespace http = beast::http;
@@ -142,14 +144,23 @@ private:
     http::request<http::string_body> req;
     fill_request(req, http::verb::get, get_path, json::object());
     http::response<http::dynamic_body> res;
-    int response_code = send_request(req, res);
-
-    if (response_code != 200) {
-      std::cout << "Unsuccessful GET" << std::endl;
-      // TODO: Handle failed connection
+    
+    // This will attempt for 5 minutes
+    for (int i = 0; i < 500; i++) {
+      int response_code = send_request(req, res);
+      if (response_code != 200) {
+        std::cout << "Unsuccessful GET" << std::endl;
+        sleep(1);
+      } else {
+        break;
+      } 
     }
-    // data has 2 fields "locations" : [{x, y, theta, agent_id}], "status" :
-    // [SUCEEDED|FAILED|IN-PROGRESS]
+    assert(res.base().result_int() == 200); // Assert that the request succeeded
+
+    // data has 2 fields {
+    //              "locations" : [{x, y, theta, agent_id}], 
+    //              "status" : [SUCEEDED|FAILED|IN-PROGRESS]
+    //              }
 
     return json::parse(beast::buffers_to_string(res.body().data()));
   }
@@ -159,6 +170,7 @@ private:
     int y = abs(state_json["y"].get<int>());
     int theta = state_json["theta"].get<int>();
     int agent_id = state_json["agent_id"].get<int>();
+
     return State(xy_to_location(x, y, grid.cols), timestep,
                  ((theta + 45) / 90) % 4); // Map 0-360 to 0-3
   }

@@ -1,5 +1,7 @@
 #ifndef flow_hpp
 #define flow_hpp
+
+#pragma once
 #include "Types.h"
 #include "SharedEnv.h"
 

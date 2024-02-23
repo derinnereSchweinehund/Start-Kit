@@ -1,20 +1,14 @@
 #include "turtlebot/TurtlebotSimulator.hpp"
 #include "SharedEnv.h"
 #include "nlohmann/json.hpp"
-#include <boost/beast/core.hpp>
-#include <boost/beast/core/tcp_stream.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/beast/http/dynamic_body.hpp>
-#include <boost/beast/http/fields.hpp>
-#include <boost/beast/http/message.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <vector>
 
 using json = nlohmann::json;
 namespace beast = boost::beast; // from <boost/beast.hpp>
 namespace http = beast::http;   // from <boost/beast/http.hpp>
-namespace net = boost::asio;    // from <boost/asio.hpp>
-using tcp = net::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
 inline bool
 TurtlebotSimulator::validate_safe(const SharedEnvironment &state,
@@ -37,7 +31,7 @@ void TurtlebotSimulator::simulate_action(SharedEnvironment &state,
 
   http::response<http::dynamic_body> res = send_next_states(next_states);
 
-  // Figure out what to do when send failed, retry?
+  assert(res.base().result_int() == 200); // Assert successful http
 
   // Understand response to create Status codes
   json agent_results = get_agent_status();

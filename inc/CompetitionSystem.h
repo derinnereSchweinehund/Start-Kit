@@ -1,3 +1,4 @@
+#pragma once
 #include "ActionModel.h"
 #include "Logger.h"
 #include "SharedEnv.h"

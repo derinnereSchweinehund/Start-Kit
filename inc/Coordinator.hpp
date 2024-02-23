@@ -1,4 +1,4 @@
-
+#pragma once
 #include "ActionModel.h"
 #include "ExecutionSimulator.h"
 #include "ScheduleTable.hpp"

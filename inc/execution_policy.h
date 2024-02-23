@@ -1,3 +1,4 @@
+#pragma once
 #include "ActionModel.h"
 #include "ScheduleTable.hpp"
 #include "SharedEnv.h"
