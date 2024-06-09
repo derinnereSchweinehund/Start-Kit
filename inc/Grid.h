@@ -2,14 +2,15 @@
 
 #include "common.h"
 
-class Grid
-{
+namespace domain {
+class Grid {
 public:
-    Grid(string fname);
+  Grid(string fname);
 
-    int rows;
-    int cols;
-    std::vector<int> map;
-    string map_name;
-
+private:
+  int rows;
+  int cols;
+  std::vector<int> map;
+  string map_name;
 };
+} // namespace domain

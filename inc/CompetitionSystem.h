@@ -15,7 +15,9 @@ struct metrics_t {
 
 template <class Task_Generator, class Task_Assigner, class Execution_Policy,
           class Planner, class Simulator>
+
 class BaseSystem {
+
 public:
   BaseSystem(Task_Generator *task_generator, Task_Assigner *task_assigner,
              Execution_Policy *execution_policy, Planner *planner,
@@ -24,10 +26,10 @@ public:
         execution_policy_(execution_policy), planner_(planner),
         simulator_(simulator), logger_(logger) {}
 
-  void simulate(SharedEnvironment *const state, int simulation_time) {
+  void simulate(state::SharedEnvironment *const state, int simulation_time) {
 
     // immutable state pointer for those pesky user defined functions
-    const SharedEnvironment *const immutable_state = state;
+    const state::SharedEnvironment *const immutable_state = state;
 
     while (task_generator_->update_tasks(state)) {
       task_assigner_->assign_tasks(immutable_state);

@@ -22,7 +22,6 @@ public:
     }
 
     return planner_->query(start_locations, goal_locations, 3.0);
-
   }
 
 private:
@@ -42,13 +41,14 @@ public:
       : planner_(planner), schedule_() {}
 
   // Delay action if the agent is waiting for another to use the next location
-  std::vector<Action> get_actions(const SharedEnvironment *state) {
+  std::vector<Action> get_actions(const state::SharedEnvironment *state) {
     schedule_.clear();
 
     std::vector<int> goal_locations(state->num_of_agents_);
     for (size_t i = 0; i < state->num_of_agents_; i++) {
       goal_locations[i] = state->assigned_tasks_[i].front().location;
     }
+
     vector<Action> planner_actions =
         planner_->query(state->current_states_, goal_locations);
     vector<State> next_states =

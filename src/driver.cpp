@@ -122,8 +122,8 @@ int main(int argc, char **argv) {
   task_generator::TaskGenerator task_generator(task_file);
   task_assigner::TaskAssigner task_assigner;
 
-  SharedEnvironment state(team_size);
-  Grid grid(base_folder + map_file);
+  state::SharedEnvironment state(team_size);
+  domain::Grid grid(base_folder + map_file);
   ActionModelWithRotate model(grid);
   PerfectSimulator<ActionModelWithRotate> simulator(model);
 
@@ -139,7 +139,6 @@ int main(int argc, char **argv) {
                          &wrapped_planner, &simulator, &logger);
 
   // signal(SIGINT, sigint_handler);
-
   competition_system.simulate(&state, max_simulation_time);
 
   // collect metrics from each of the components of the competition system.

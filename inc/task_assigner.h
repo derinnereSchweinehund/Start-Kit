@@ -11,7 +11,8 @@ class TaskAssigner {
 public:
   TaskAssigner() : agent_id_(0) {}
 
-  std::vector<deque<tasks::Task>> assign_tasks(const SharedEnvironment *state) {
+  std::vector<deque<tasks::Task>>
+  assign_tasks(const state::SharedEnvironment *state) {
 
     // Assign tasks to agents in a round robin fashion
     std::vector<deque<tasks::Task>> assigned_tasks(state->num_of_agents_);

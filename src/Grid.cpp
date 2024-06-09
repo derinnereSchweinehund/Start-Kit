@@ -2,7 +2,7 @@
 #include <boost/tokenizer.hpp>
 
 
-Grid::Grid(string fname)
+domain::Grid::Grid(string fname)
 {
     std::string line;
     std::ifstream myfile ((fname).c_str());
