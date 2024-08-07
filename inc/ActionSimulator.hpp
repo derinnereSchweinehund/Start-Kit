@@ -4,16 +4,16 @@
 #include "SharedEnv.h"
 #include <random>
 
-template <class ActionModel> class ActionSimulator {
+class ActionSimulator {
 public:
-  ActionSimulator(ActionModel &model, Grid &grid) : model(model), grid(grid){};
-  virtual void simulate_action(SharedEnvironment &state,
-                               const vector<Action> &next_actions);
+  ActionSimulator(ActionModelWithRotate &model, Grid &grid) : model(model), grid(grid){};
+  virtual void simulate_actions(SharedEnvironment &state,
+                               const vector<Action> &next_actions) = 0;
   virtual bool validate_safe(const SharedEnvironment &state,
-                             const vector<Action> &next_actions);
+                             const vector<Action> &next_actions) = 0;
 
 protected:
-  ActionModel &model;
+  ActionModelWithRotate &model;
   SharedEnvironment *state;
   Grid &grid;
 
@@ -75,11 +75,11 @@ protected:
 
 // Classical MAPF scenario where all actions succeed
 // I wanted to write a template <class T> to do ActionSimulator<T>
-class PerfectSimulator : ActionSimulator<ActionModelWithRotate> {
+class PerfectSimulator : ActionSimulator {
 public:
   PerfectSimulator(ActionModelWithRotate &model, Grid &grid) : ActionSimulator(model, grid){};
 
-  void simulate_action(SharedEnvironment &state,
+  void simulate_actions(SharedEnvironment &state,
                        const vector<Action> &next_actions) override;
 
   bool validate_safe(const SharedEnvironment &state,
@@ -87,16 +87,16 @@ public:
 };
 
 // Implements delay probability for MAPF-DP
-class ProbabilisticSimulator : ActionSimulator<ActionModelWithRotate> {
+class ProbabilisticSimulator : ActionSimulator {
 public:
   ProbabilisticSimulator(ActionModelWithRotate &model, Grid &grid, float success_chance)
       : success_chance_(success_chance), rd_(), gen_(rd_()), distrib_(0, 1),
         ActionSimulator(model, grid){};
 
-  void simulate_action(SharedEnvironment &state,
+  void simulate_actions(SharedEnvironment &state,
                        const vector<Action> &next_actions) override;
 
-  virtual bool validate_safe(const SharedEnvironment &state,
+  bool validate_safe(const SharedEnvironment &state,
                              const vector<Action> &next_actions) override;
 
 private:

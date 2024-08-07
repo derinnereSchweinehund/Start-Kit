@@ -47,8 +47,7 @@ int main(int argc, char **argv) {
   // Declare the supported options.
   po::options_description desc("Allowed options");
   desc.add_options()("help", "produce help message")
-      // ("inputFolder", po::value<std::string>()->default_value("."), "input
-      // folder")
+      ("inputFolder", po::value<std::string>()->default_value("./"), "inputfolder")
       ("inputFile,i", po::value<std::string>()->required(), "input file name")(
           "output,o", po::value<std::string>()->default_value("./test.json"),
           "output file name")(
@@ -109,6 +108,12 @@ int main(int argc, char **argv) {
   }
 
   std::string map_file = read_param_json<std::string>(data, "mapFile");
+  auto map_path = boost::filesystem::path(map_file);
+  auto config_dir = p.remove_filename();
+  auto x = config_dir / map_path;
+
+  
+  //std::cout << map_file << std::endl;
   int team_size = read_param_json<int>(data, "teamSize");
   int num_task_real = read_param_json<int>(data, "numTasksReveal", 1);
   std::string agent_file =
@@ -125,11 +130,11 @@ int main(int argc, char **argv) {
 
   // Build and Assemble the system
   SharedEnvironment state(team_size);
-  Grid grid(map_file);
+  Grid grid(x.string());
   ActionModelWithRotate model(grid);
-  PerfectSimulator simulator(model);
+  PerfectSimulator simulator(model, grid);
   task_assigner::TaskAssigner task_assigner;
-  planner::MAPFPlanner planner(&grid);
+  planner::MAPFPlanner planner(grid);
   planner::MAPFPlannerWrapper wrapped_planner(&planner, &logger);
   execution_policy::MAPFExecutionPolicy execution_policy(&wrapped_planner);
 

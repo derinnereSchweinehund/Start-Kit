@@ -1,14 +1,14 @@
 #ifndef heuristics_hpp
 #define heuristics_hpp
 
-#include "SharedEnv.h"
+#include "Grid.h"
 #include "States.h"
 #include "Types.h"
 #include "utils.hpp"
 #include <queue>
 
 
-void compute_heuristics(const SharedEnvironment* env, HeuristicTable& my_heuristic, int goal_location)
+void compute_heuristics(const Grid& grid, HeuristicTable& my_heuristic, int goal_location)
 {
 
 	struct Node
@@ -31,7 +31,7 @@ void compute_heuristics(const SharedEnvironment* env, HeuristicTable& my_heurist
 	};
 	
 	// initialize my_heuristic, but have error on malloc: Region cookie corrupted for region
-	my_heuristic.resize(env->map.size(),MAX_TIMESTEP);
+	my_heuristic.resize(grid.map.size(),MAX_TIMESTEP);
 
 	// generate a heap that can save nodes (and a open_handle)
 	std::queue<Node> heap;
@@ -45,10 +45,10 @@ void compute_heuristics(const SharedEnvironment* env, HeuristicTable& my_heurist
 		Node curr = heap.front();
 		heap.pop();
 
-		getNeighborLocs(env,neighbors,curr.location);
+		getNeighborLocs(grid,neighbors,curr.location);
 		for (int next : neighbors)
 		{
-			assert(next >= 0 && next < env->map.size());
+			assert(next >= 0 && next < grid.map.size());
 			//set current cost for reversed direction
 			if (my_heuristic[next]>curr.value+1)
 			{
@@ -61,7 +61,7 @@ void compute_heuristics(const SharedEnvironment* env, HeuristicTable& my_heurist
 
 
 
-void compute_heuristics(const SharedEnvironment* env, HeuristicTable& my_heuristic, std::vector<int>& traffic, int goal_location)
+void compute_heuristics(const Grid& grid, HeuristicTable& my_heuristic, std::vector<int>& traffic, int goal_location)
 {
 
 	struct Node
@@ -84,7 +84,7 @@ void compute_heuristics(const SharedEnvironment* env, HeuristicTable& my_heurist
 	};
 	
 	// initialize my_heuristic, but have error on malloc: Region cookie corrupted for region
-	my_heuristic.resize(env->map.size(),MAX_TIMESTEP);
+	my_heuristic.resize(grid.map.size(),MAX_TIMESTEP);
 
 	// generate a heap that can save nodes (and a open_handle)
 	std::queue<Node> heap;
@@ -98,11 +98,11 @@ void compute_heuristics(const SharedEnvironment* env, HeuristicTable& my_heurist
 		Node curr = heap.front();
 		heap.pop();
         // if (traffic[curr.location] == -1)
-		    getNeighborLocs(env,neighbors,curr.location);
+		    getNeighborLocs(grid,neighbors,curr.location);
         // else {
         //     neighbors.clear();
         //     int d = (traffic[curr.location]+2)%4;
-        //     int candidates[4] = { curr.location + 1,curr.location + env->cols, curr.location - 1, curr.location - env->cols};
+        //     int candidates[4] = { curr.location + 1,curr.location + grid.cols, curr.location - 1, curr.location - grid.cols};
         //     neighbors.push_back(candidates[d]);
         // }
 
@@ -114,15 +114,15 @@ void compute_heuristics(const SharedEnvironment* env, HeuristicTable& my_heurist
 				if (
 					(diff == 1 && d !=0) ||
 					(diff == -1 && d !=2) ||
-					(diff == env->cols && d !=1) ||
-					(diff == -env->cols && d !=3)
+					(diff == grid.cols && d !=1) ||
+					(diff == -grid.cols && d !=3)
 				)
 					continue;
 			}
 
 			if (traffic[curr.location] != -1 ){
 				int d = traffic[curr.location];
-    			int candidates[4] = { curr.location + 1,curr.location + env->cols, curr.location - 1, curr.location - env->cols};
+    			int candidates[4] = { curr.location + 1,curr.location + grid.cols, curr.location - 1, curr.location - grid.cols};
 				if (
 					next == candidates[d]
 				)
@@ -130,7 +130,7 @@ void compute_heuristics(const SharedEnvironment* env, HeuristicTable& my_heurist
 			}
 
             
-			assert(next >= 0 && next < env->map.size());
+			assert(next >= 0 && next < grid.map.size());
 			//set current cost for reversed direction
 			if (my_heuristic[next]>curr.value+1)
 			{

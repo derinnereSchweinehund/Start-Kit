@@ -3,24 +3,12 @@
 using json = nlohmann::ordered_json;
 
 namespace base_system {
-
-template <class Task_Generator, class Task_Assigner, class Execution_Policy,
-          class Planner, class Simulator>
-void BaseSystem<Task_Generator, Task_Assigner, Execution_Policy, Planner,
-                Simulator>::simulate(SharedEnvironment *const state,
-                                     int simulation_time) {
-
-  // immutable state pointer for those pesky user defined functions
-  const SharedEnvironment *const immutable_state = state;
-
-  while (task_generator_->update_tasks(state)) {
-    task_assigner_->assign_tasks(immutable_state);
-
-    std::vector<Action> next_actions =
-        execution_policy_->get_actions(immutable_state);
-    simulator_->simulate_actions(state, next_actions);
+  void burne() {
+    std::cout << "Burne says hi" << std::endl;
   }
-}
+// template <class Task_Generator, class Task_Assigner, class Execution_Policy,
+//           class Planner, class Simulator>
+
 
 // template <class Task_Generator, class Task_Assigner, class Execution_Policy,
 // class Planner, class Simulator>

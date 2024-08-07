@@ -26,17 +26,17 @@ void quickSort(T& agent_order, int low, int high, F compare)
     quickSort(agent_order, i + 1, high, compare); // After i
 }
 
-bool validateMove(int loc, int loc2, const SharedEnvironment* env)
+bool validateMove(int loc, int loc2, const Grid& grid)
 {
-    int loc_x = loc/env->cols;
-    int loc_y = loc%env->cols;
+    int loc_x = loc/grid.cols;
+    int loc_y = loc%grid.cols;
 
-    if (loc_x < 0 || loc_y < 0 || loc_x >= env->rows || loc_y >= env->cols || env->map[loc] == 1)
+    if (loc_x < 0 || loc_y < 0 || loc_x >= grid.rows || loc_y >= grid.cols || grid.map[loc] == 1)
         return false;
 
-    int loc2_x = loc2/env->cols;
-    int loc2_y = loc2%env->cols;
-	 if (loc2_x < 0 || loc2_y < 0 ||loc2_x >= env->rows || loc2_y >= env->cols || env->map[loc2] == 1)
+    int loc2_x = loc2/grid.cols;
+    int loc2_y = loc2%grid.cols;
+	 if (loc2_x < 0 || loc2_y < 0 ||loc2_x >= grid.rows || loc2_y >= grid.cols || grid.map[loc2] == 1)
         return false;
     if (abs(loc_x-loc2_x) + abs(loc_y-loc2_y) > 1)
         return false;
@@ -44,19 +44,19 @@ bool validateMove(int loc, int loc2, const SharedEnvironment* env)
 
 }
 
-int manhattanDistance(int loc, int loc2,const SharedEnvironment* env){
-	int loc_x = loc/env->cols;
-	int loc_y = loc%env->cols;
-	int loc2_x = loc2/env->cols;
-	int loc2_y = loc2%env->cols;
+int manhattanDistance(int loc, int loc2,const Grid& grid){
+	int loc_x = loc/grid.cols;
+	int loc_y = loc%grid.cols;
+	int loc2_x = loc2/grid.cols;
+	int loc2_y = loc2%grid.cols;
 	return abs(loc_x-loc2_x) + abs(loc_y-loc2_y);
 
 }
-void getNeighbors(const SharedEnvironment* env, std::vector<std::pair<int,int>>& neighbors, int location,int direction) {
+void getNeighbors(const Grid& grid, std::vector<std::pair<int,int>>& neighbors, int location,int direction) {
     neighbors.clear();
 	//forward
-	assert(location >= 0 && location < env->map.size());
-    int candidates[4] = { location + 1,location + env->cols, location - 1, location - env->cols};
+	assert(location >= 0 && location < grid.map.size());
+    int candidates[4] = { location + 1,location + grid.cols, location - 1, location - grid.cols};
     int forward = candidates[direction];
     int new_direction = direction;
 	assert(forward!=location);
@@ -64,7 +64,7 @@ void getNeighbors(const SharedEnvironment* env, std::vector<std::pair<int,int>>&
 	#ifndef NDEBUG
 			std::cout<<"forward: "<<forward<<std::endl;
 	#endif
-    if (validateMove(location, forward, env)	){
+    if (validateMove(location, forward, grid)	){
 		#ifndef NDEBUG
 			std::cout<<"forward yes"<<std::endl;
 		#endif
@@ -85,15 +85,15 @@ void getNeighbors(const SharedEnvironment* env, std::vector<std::pair<int,int>>&
     neighbors.emplace_back(make_pair(location,direction)); //wait
 }
 
-void getNeighbors_nowait(const SharedEnvironment* env, std::vector<std::pair<int,int>>& neighbors, int location,int direction) {
+void getNeighbors_nowait(const Grid& grid, std::vector<std::pair<int,int>>& neighbors, int location,int direction) {
     neighbors.clear();
 	//forward
-	assert(location >= 0 && location < env->map.size());
-    int candidates[4] = { location + 1,location + env->cols, location - 1, location - env->cols};
+	assert(location >= 0 && location < grid.map.size());
+    int candidates[4] = { location + 1,location + grid.cols, location - 1, location - grid.cols};
     int forward = candidates[direction];
     int new_direction = direction;
-    if (validateMove(location, forward, env)){
-		assert(forward >= 0 && forward < env->map.size());
+    if (validateMove(location, forward, grid)){
+		assert(forward >= 0 && forward < grid.map.size());
         neighbors.emplace_back(make_pair(forward,new_direction));
 	}
     //turn left
@@ -110,16 +110,16 @@ void getNeighbors_nowait(const SharedEnvironment* env, std::vector<std::pair<int
     neighbors.emplace_back(make_pair(location,new_direction));
 }
 
-void getNeighborLocs(const SharedEnvironment* env, std::vector<int>& neighbors, int location) {
+void getNeighborLocs(const Grid& grid, std::vector<int>& neighbors, int location) {
     neighbors.clear();
 	//forward
-	assert(location >= 0 && location < env->map.size());
-    int candidates[4] = { location + 1,location + env->cols, location - 1, location - env->cols};
+	assert(location >= 0 && location < grid.map.size());
+    int candidates[4] = { location + 1,location + grid.cols, location - 1, location - grid.cols};
 
 	for (int i = 0; i < 4; i++) {
 		int forward = candidates[i];
 		assert(forward!=location);
-		if (validateMove(location, forward, env)	){
+		if (validateMove(location, forward, grid)	){
 			neighbors.emplace_back(forward);
 		}
 	}

@@ -31,7 +31,7 @@ public:
       : stream_(ioc_), resolver_(ioc_),
         model_(model), grid_(grid) {}
 
-  void simulate_action(SharedEnvironment &state,
+  void simulate_actions(SharedEnvironment &state,
                        const vector<Action> &next_action) {
     if (!validate_safe(state, next_action)) {
       for (Status agent_status : state.current_status_) {
