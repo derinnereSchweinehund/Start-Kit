@@ -12,7 +12,7 @@ template <class P> class ExecutionPolicy {
 public:
   ExecutionPolicy(P *planner) : planner_(planner) {}
 
-  std::vector<Action> &get_actions(const SharedEnvironment *state) {
+  std::vector<Action> get_actions(const SharedEnvironment *state) {
     return planner_->query(state->current_states_, state->assigned_tasks_, 3.0);
   }
 

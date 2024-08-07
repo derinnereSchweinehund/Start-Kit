@@ -21,8 +21,14 @@ template <class P> class wrapper {
 public:
   wrapper(P *planner, Logger *logger)
       : planner_(planner), metrics_(), timer_(), logger_(logger) {
-
-    query_(planner_->query);
+    auto planner_query_fn = [&](const std::vector<State>& a, const std::vector<std::deque<tasks::Task>>& b, double c) {
+      return planner->query(a, b, c);
+      };
+    query_ = std::packaged_task<std::vector<Action>(const std::vector<State>&,
+                                         const std::vector<std::deque<tasks::Task>>&, double)>(planner_query_fn);
+    //query_(std::bind(&P::query, planner, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    //query_ = std::packaged_task<std::vector<Action>(P::*(const std::vector<int>&, const std::vector<int>&, double))>(
+        //std::bind(&P::query, &planner_, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     result_ = query_.get_future();
   }
 
@@ -30,8 +36,8 @@ public:
   // @param start The start states of the agents
   // @param goal The goal states of the agents
   // @return The next action for each agent
-  std::vector<Action> query(const std::vector<size_t> &starts,
-                            const std::vector<size_t> &goals,
+  std::vector<Action> query(const std::vector<State> &starts,
+                            const std::vector<std::deque<tasks::Task>> &goals,
                             double time_limit = 0.0) {
 
     metrics_.num_queries_++;
@@ -61,9 +67,9 @@ private:
   Timer timer_;
   Logger *const logger_;
 
-  std::packaged_task<std::vector<Action>(const std::vector<size_t>,
-                                         const std::vector<size_t>, double)>
-      query_;
+  //std::packaged_task<std::vector<Action>(P::*(const std::vector<int>&,
+                                         //const std::vector<int>&, double))>
+  std::packaged_task<std::vector<Action>(const std::vector<State>&, const std::vector<std::deque<tasks::Task>>&, double)> query_;
   std::future<std::vector<Action>> result_;
 };
 

@@ -8,14 +8,14 @@
 #include <unordered_set>
 #include <tuple>
 #include "ActionModel.h"
-#include "SharedEnv.h"
+#include "Grid.h"
 #include "States.h"
 #include "Types.h"
 #include "utils.hpp"
 
 
 bool constraintPIBT(int curr_id, int higher_id,std::vector<State>& prev_states,
-	 std::vector<State>& next_states, const SharedEnvironment* env,
+	 std::vector<State>& next_states, const Grid& grid,
       vector<int>& prev_decision, vector<int>& decision, 
 	  std::vector<int>& tasks, const std::vector<HeuristicTable>& heuristics,
 	  std::vector<bool>& occupied, std::vector<int>& traffic){
@@ -24,45 +24,45 @@ bool constraintPIBT(int curr_id, int higher_id,std::vector<State>& prev_states,
 	assert(next_states[curr_id].location == -1);
     int prev_loc = prev_states[curr_id].location;
 	int prev_orientation = prev_states[curr_id].orientation;
-	int next[4] = { prev_loc + 1,prev_loc + env->cols, prev_loc - 1, prev_loc - env->cols};
+	int next[4] = { prev_loc + 1,prev_loc + grid.cols, prev_loc - 1, prev_loc - grid.cols};
 	int orien_next = next[prev_orientation];
 
-	assert(prev_loc >= 0 && prev_loc < env->map.size());
+	assert(prev_loc >= 0 && prev_loc < grid.map.size());
 	assert(prev_orientation >= 0 && prev_orientation < 4);
 
 	// for each neighbor of (prev_loc,prev_direction), and a wait copy of current location, generate a successor
 	std::vector<int> neighbors;
 	std::vector<State> successors;
-	getNeighborLocs(env,neighbors,prev_loc);
+	getNeighborLocs(grid,neighbors,prev_loc);
 	for (auto& neighbor: neighbors){
 
 		//check if prev_loc -> neighbor violoate the traffic rule on neighbor
 		//violate if  traffic[neighbor] leads to prev_loc
 		if (traffic[neighbor] != -1 ){
-			int candidates[4] = { neighbor + 1,neighbor + env->cols, neighbor - 1, neighbor - env->cols};
+			int candidates[4] = { neighbor + 1,neighbor + grid.cols, neighbor - 1, neighbor - grid.cols};
 			if (prev_loc  == candidates[traffic[neighbor]])
 				continue;
 		}
-		assert(validateMove(prev_loc, neighbor, env));
+		assert(validateMove(prev_loc, neighbor, grid));
 
 		//get ,min(heuristics[tasks[curr_id]][neighbor].d)
 		int min_heuristic;
 		if (heuristics.at(tasks.at(curr_id)).empty())
-			min_heuristic = manhattanDistance(neighbor,tasks.at(curr_id),env);
+			min_heuristic = manhattanDistance(neighbor,tasks.at(curr_id),grid);
 		else
 			min_heuristic = heuristics.at(tasks.at(curr_id)).at(neighbor);
 		successors.emplace_back(neighbor,min_heuristic,-1);
 	}	
 	successors.emplace_back(prev_loc,
 		heuristics.at(tasks.at(curr_id)).empty()? 
-			manhattanDistance(prev_loc,tasks.at(curr_id),env):
+			manhattanDistance(prev_loc,tasks.at(curr_id),grid):
 			heuristics.at(tasks.at(curr_id)).at(prev_loc),
 		-1);
 	// std::sort(successors.begin(), successors.end(), 
 	quickSort(successors,0, successors.size()-1, 
 		[&](State& a, State& b)
 		{
-			int diff[4] = {1,env->cols,-1,-env->cols};
+			int diff[4] = {1,grid.cols,-1,-grid.cols};
 			if (a.timestep == b.timestep){
 				// if (a==orien_next && b!=orien_next)
 				// 	return true;
@@ -86,7 +86,7 @@ bool constraintPIBT(int curr_id, int higher_id,std::vector<State>& prev_states,
 		if (occupied[next.location])
 			continue;
 		
-		assert(validateMove(prev_loc, next.location, env));
+		assert(validateMove(prev_loc, next.location, grid));
 		
 		if (next.location == -1)
 			continue;
@@ -105,7 +105,7 @@ bool constraintPIBT(int curr_id, int higher_id,std::vector<State>& prev_states,
 			// next_states.at(prev_decision.at(prev_states[curr_id].location)).location == -1 )
 			{
             int lower_id = prev_decision.at(next.location);
-            if (!constraintPIBT(lower_id,curr_id,prev_states,next_states,env, prev_decision,decision,tasks,heuristics, occupied, traffic)){
+            if (!constraintPIBT(lower_id,curr_id,prev_states,next_states,grid, prev_decision,decision,tasks,heuristics, occupied, traffic)){
 				continue;
             }
 					// next_states.at(curr_id) = prev_states.at(curr_id); // Wait after pushing
@@ -145,7 +145,7 @@ inline Action getAction(State& prev, State& next){
 	return Action::W;
 }
 
-inline Action getAction(State& prev, int next_loc, SharedEnvironment* env){
+inline Action getAction(State& prev, int next_loc, const Grid& grid){
 	if (prev.location == next_loc){
 		return Action::W;
 	}
@@ -157,10 +157,10 @@ inline Action getAction(State& prev, int next_loc, SharedEnvironment* env){
 	if (diff == -1){
 		orientation = 2;
 	}
-	if (diff == env->cols){
+	if (diff == grid.cols){
 		orientation = 1;
 	}
-	if (diff == -env->cols){
+	if (diff == -grid.cols){
 		orientation = 3;
 	}
 	if (orientation == prev.orientation){

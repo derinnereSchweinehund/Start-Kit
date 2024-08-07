@@ -9,9 +9,9 @@ namespace planner {
 
 class MAPFPlanner {
 public:
-  const Grid *const grid_;
+  const Grid& grid_;
 
-  MAPFPlanner(Grid *const grid) : grid_(grid){};
+  MAPFPlanner(const Grid& grid) : grid_(grid){};
   ~MAPFPlanner() {}
 
   std::vector<HeuristicTable> heuristics;
@@ -26,6 +26,7 @@ public:
   std::vector<bool> occupied;
   std::vector<DCR> decided;
   std::vector<bool> checked;
+  SharedEnvironment* env;
   // Start kit dummy implementation
 
   std::vector<Traj> trajs;
@@ -34,14 +35,14 @@ public:
 
   bool traffic_control = false;
 
-  virtual void initialize(const SharedEnvironment *initial_state,
+  virtual void initialize(SharedEnvironment *initial_state,
                           double preprocess_time_limit);
 
-  vector<Action> query(std::vector<int> start_locations,
-                       std::vector<int> goal_locations, double time_limit);
+  vector<Action> query(const std::vector<State>& start_states,
+                       const std::vector<std::deque<tasks::Task>>& goal_locations, double time_limit);
 
   // return next states for all agents
-  virtual void plan(int time_limit, std::vector<Action> &plan);
+  virtual void plan(int time_limit, const vector<State>& curr_states, std::vector<Action> &plan);
 
   // Start kit dummy implementation
   std::list<pair<int, int>>

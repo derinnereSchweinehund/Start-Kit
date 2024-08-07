@@ -18,7 +18,7 @@
 // }
 
 // template<class ActionModel>
-// void TurtlebotSimulator<ActionModel>::simulate_action(SharedEnvironment &state,
+// void TurtlebotSimulator<ActionModel>::simulate_actions(SharedEnvironment &state,
 //                                          const vector<Action> &next_action) {
 //   if (!validate_safe(state, next_action)) {
 //     for (Status agent_status : state.current_status_) {

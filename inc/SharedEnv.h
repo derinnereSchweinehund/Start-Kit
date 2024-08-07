@@ -24,6 +24,9 @@ struct SharedEnvironment {
     assigned_actions_.resize(num_of_agents);
     current_status_.resize(num_of_agents);
   }
+  vector<int> goal_locations(int agent_num){
+    
+  }
 };
 
 #endif

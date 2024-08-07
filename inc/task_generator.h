@@ -27,7 +27,7 @@ public:
 
   // - update the task generator state
   // - return true if the task generator has no more tasks to reveal
-  bool update_task(SharedEnvironment &state) {
+  bool update_tasks(SharedEnvironment &state) {
 
     for (size_t i = 0; i < state.num_of_agents_; i++) {
       if (state.current_states_[i].location ==
