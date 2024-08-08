@@ -21,15 +21,17 @@ template <class P> class wrapper {
 public:
   wrapper(P *planner, Logger *logger)
       : planner_(planner), metrics_(), timer_(), logger_(logger) {
-    auto planner_query_fn = [&](const std::vector<State>& a, const std::vector<std::deque<tasks::Task>>& b, double c) {
-      return planner->query(a, b, c);
+    auto planner_query_fn = [=](const std::vector<State>& a, const std::vector<std::deque<tasks::Task>>& b, double c) {
+      //std::cout << "FUTURE" << planner << std::flush;
+      //return planner->query(a, b, c);
+      return std::vector<Action>(a.size(), Action::W);
       };
     query_ = std::packaged_task<std::vector<Action>(const std::vector<State>&,
                                          const std::vector<std::deque<tasks::Task>>&, double)>(planner_query_fn);
     //query_(std::bind(&P::query, planner, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     //query_ = std::packaged_task<std::vector<Action>(P::*(const std::vector<int>&, const std::vector<int>&, double))>(
         //std::bind(&P::query, &planner_, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-    result_ = query_.get_future();
+    //result_ = query_.get_future();
   }
 
   // Calls the planner's query method and updates the metrics
@@ -41,20 +43,26 @@ public:
                             double time_limit = 0.0) {
 
     metrics_.num_queries_++;
+    
     timer_.start();
-
-    std::thread task(std::move(query_), starts, goals, time_limit);
-
     std::vector<Action> actions{};
+    try {
+      result_ = query_.get_future();
+      std::thread task(std::move(query_), starts, goals, time_limit); 
     if (result_.wait_for(std::chrono::duration<double>(time_limit)) ==
         std::future_status::ready) {
+      std::cout << "PASSED" << std::flush;
       task.join();
-      std::vector<Action> actions = result_.get();
+      //std::vector<Action> 
+      actions = result_.get();
     } else {
       logger_->log_info("planner timeout");
     }
 
     metrics_.planning_time_nanos_ += timer_.elapsed_time_nano();
+    } catch (const std::exception& e) {
+      std::cout << '\n' << e.what() << std::flush;
+    }
     return actions;
   }
 

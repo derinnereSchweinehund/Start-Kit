@@ -74,19 +74,18 @@ void planner::MAPFPlanner::initialize(SharedEnvironment *initial_state,
 vector<Action> planner::MAPFPlanner::query(const std::vector<State>& start_states,
                                            const std::vector<std::deque<tasks::Task>>& goal_locations,
                                            double time_limit){
-                                            return {};
+                                            std::cout << "PROBLEMATIC" << std::flush;
+                                            return vector<Action>(start_states.size(), Action::W);
                                            };
 
 // return next states for all agents
 void planner::MAPFPlanner::plan(int time_limit, const vector<State>& curr_states, vector<Action> &actions) {
-
   prev_decision.clear();
   prev_decision.resize(grid_.map.size(), -1);
   occupied.clear();
   occupied.resize(grid_.map.size(), false);
 
   int ch_count = 0;
-
   for (int i = 0; i < env->num_of_agents_; i++) {
 
     if (ch_count < 100)

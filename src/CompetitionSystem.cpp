@@ -225,4 +225,73 @@ namespace base_system {
 // f << std::setw(4) << js;
 //}
 
+std::string action_to_string(const Action &action) {
+    switch (action) {
+        case FW: return "FW";
+        case CR: return "CR";
+        case CCR: return "CCR";
+        case W: return "W";
+        case NA: return "NA";
+        default: return "Unknown";
+    }
+}
+
+// Function to convert State to a string for output
+std::string state_to_string(const State &state) {
+    return "Location: " + std::to_string(state.location) +
+           ", Timestep: " + std::to_string(state.timestep) +
+           ", Orientation: " + std::to_string(state.orientation);
+}
+
+// Function to convert Path to a string for output
+std::string path_to_string(const Path &path) {
+    std::string result;
+    for (const auto &state : path) {
+        result += state_to_string(state) + "\n";
+    }
+    return result;
+}
+
+// Save results to a file and optionally print to the screen
+void save_results(const std::string &fileName, const metrics_t &metrics) {
+    // Open file for writing
+    std::ofstream file(fileName);
+    if (!file.is_open()) {
+        std::cerr << "Failed to open file: " << fileName << std::endl;
+        return;
+    }
+
+    // Write actual movements
+    file << "Actual Movements:\n";
+    for (const auto& agent_movements : metrics.actual_movements) {
+        for (const auto& action : agent_movements) {
+            file << action_to_string(action) << " ";
+        }
+        file << "\n";
+    }
+
+    // Write planner movements
+    file << "Planner Movements:\n";
+    for (const auto& agent_movements : metrics.planner_movements) {
+        for (const auto& action : agent_movements) {
+            file << action_to_string(action) << " ";
+        }
+        file << "\n";
+    }
+
+    // Write paths
+    file << "Paths:\n";
+    for (const auto& path : metrics.paths) {
+        file << path_to_string(path);
+    }
+
+    // Write solution costs
+    file << "Solution Costs:\n";
+    for (const auto& cost : metrics.solution_costs) {
+        file << cost << "\n";
+    }
+
+    // Close the file
+    file.close();
+  }
 } // namespace base_system

@@ -25,7 +25,11 @@ struct SharedEnvironment {
     current_status_.resize(num_of_agents);
   }
   vector<int> goal_locations(int agent_num){
-    
+    vector<int> goal_locs(assigned_tasks_.size()); 
+    std::transform(assigned_tasks_.cbegin(), assigned_tasks_.cend(), goal_locs.begin(), [](deque<tasks::Task> task_queue){
+      return task_queue.front().location;
+    });
+    return goal_locs;
   }
 };
 
