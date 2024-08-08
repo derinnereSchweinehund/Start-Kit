@@ -2,6 +2,7 @@
 #include "ActionModel.h"
 #include "Logger.h"
 #include "SharedEnv.h"
+#include <memory>
 
 namespace base_system {
 
@@ -29,13 +30,17 @@ public:
   void simulate(SharedEnvironment *state, int simulation_time) {
 
     // immutable state pointer for those pesky user defined functions
-    const SharedEnvironment *const immutable_state = state;
+    //const SharedEnvironment *const immutable_state = state;
+    //consider making state a shared_ptr
+    std::cout << task_generator_->update_tasks(*state) << '\n';
 
-    while (task_generator_->update_tasks(*state)) {
-      task_assigner_->assign_tasks(immutable_state);
-
+    while (!task_generator_->update_tasks(*state)) {
+      std::cout << "HI T" << std::flush;
+      task_assigner_->assign_tasks(state);
+      std::cout << "1" << std::flush;
       std::vector<Action> next_actions =
-          execution_policy_->get_actions(immutable_state);
+          execution_policy_->get_actions(state);
+      std::cout << "2" << std::flush;
       simulator_->simulate_actions(*state, next_actions);
     }
 }

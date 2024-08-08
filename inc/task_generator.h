@@ -35,11 +35,11 @@ public:
         state.assigned_tasks_[i].pop_front();
       }
     }
-
+    std::cout << "?" << '\n';
     if (tasks_remaining(state)) {
       return false;
     }
-
+    std::cout << "!" << '\n';
     if (timer_.elapsed_time_sec() < reveal_interval_) {
       return true;
     }
@@ -67,7 +67,7 @@ private:
 
   bool tasks_remaining(SharedEnvironment &state) {
 
-    if (state.available_tasks_.empty()) {
+    if (!state.available_tasks_.empty()) {
       return true;
     }
 

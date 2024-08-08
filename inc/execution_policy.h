@@ -13,6 +13,7 @@ public:
   ExecutionPolicy(P *planner) : planner_(planner) {}
 
   std::vector<Action> get_actions(const SharedEnvironment *state) {
+    std::cout << state  << "HI" << std::flush;
     return planner_->query(state->current_states_, state->assigned_tasks_, 3.0);
   }
 

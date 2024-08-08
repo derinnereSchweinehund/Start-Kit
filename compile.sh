@@ -2,7 +2,7 @@
 mkdir build
 
 # build exec for cpp
-
+#  
 cmake -B build ./ -DCMAKE_CXX_FLAGS=-fsanitize=address --trace-expand -DCMAKE_BUILD_TYPE=DEBUG
 make -C build -j
 
